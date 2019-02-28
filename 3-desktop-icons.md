@@ -2,6 +2,11 @@
 
 ## 3 - Desktop icons
 
+After all of the changes use:
+```
+sudo update-desktop-database
+```
+
 #### 3.1 - Launch Simplicity studio and chance theme (using script)
 ```
 sudo gedit /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
@@ -76,4 +81,22 @@ gedit /home/brecht/Programs/0-scripts/showSerialAdapters.sh
 
 ```
 sudo chmod a+x /home/brecht/Programs/0-scripts/showSerialAdapters.sh
+```
+
+<br/>
+
+#### 3.4 - Eclipse shortcut
+```
+gedit .local/share/applications/eclipse.desktop
+
+    [Desktop Entry]
+    Name=Eclipse
+    Type=Application
+    Exec=/home/brecht/Programs/eclipse/eclipse-java/eclipse/eclipse
+    Terminal=false
+    Icon=/home/brecht/Programs/eclipse/eclipse-java/eclipse/icon.xpm
+    Comment=Integrated Development Environment
+    NoDisplay=false
+    Categories=Development;IDE;
+    Name[en]=Eclipse
 ```

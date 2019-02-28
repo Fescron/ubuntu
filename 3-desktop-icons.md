@@ -7,6 +7,8 @@ After all of the changes use:
 sudo update-desktop-database
 ```
 
+<br/>
+
 #### 3.1 - Launch Simplicity studio and chance theme (using script)
 ```
 sudo gedit /usr/local/share/applications/custom-SimplicityStudio_v4.desktop

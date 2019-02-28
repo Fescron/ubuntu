@@ -2,14 +2,14 @@
 
 ## Table of contents
 
-[6 - Old unused commands](6-old-unused-commands.md)
-- [6.1 - Disable USB autosuspend](1-general-commands.md#11---gpio-stuff-µart-adapter)
-- [6.2 - Bluetooth mouse](1-general-commands.md#12---usb-stuff)
-- [6.3 - Fix noise speakers](1-general-commands.md#13---file-handling)
-- [6.4 - Headphone jack suddenly stopped working](1-general-commands.md#14---packages)
-- [6.5 - Bluetooth doesn't work after resume from sleep/standby](1-general-commands.md#15---youtube-dl)
-- [6.6 - Three finger tap not working with synaptics touchpad driver](1-general-commands.md#16---conversions)
-- [6.7 - Power save stuff](1-general-commands.md#17---network)
+- [6 - Old unused commands](6-old-unused-commands.md)
+    - [6.1 - Disable USB autosuspend](6-old-unused-commands.md#61---disable-usb-autosuspend)
+    - [6.2 - Bluetooth mouse](6-old-unused-commands.md#62---bluetooth-mouse)
+    - [6.3 - Fix noise speakers](6-old-unused-commands.md#63---fix-noise-speakers)
+    - [6.4 - Headphone jack suddenly stopped working](6-old-unused-commands.md#64---headphone-jack-suddenly-stopped-working)
+    - [6.5 - Bluetooth doesn't work after resume from sleep/standby](6-old-unused-commands.md#65---bluetooth-doesnt-work-after-resume-from-sleepstandby)
+    - [6.6 - Three finger tap not working with synaptics touchpad driver](6-old-unused-commands.md#66---three-finger-tap-not-working-with-synaptics-touchpad-driver)
+    - [6.7 - Power save stuff](6-old-unused-commands.md#67---power-save-stuff)
 
 ------
 

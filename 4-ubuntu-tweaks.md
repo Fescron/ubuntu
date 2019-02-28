@@ -1,5 +1,15 @@
 [[Go back]](README.md)
 
+## Table of contents
+
+[4 - Ubuntu tweaks](4-ubuntu-tweaks.md#4---ubuntu-tweaks)
+- [4.1 - General tweaks](4-ubuntu-tweaks.md#41---general-tweaks)
+- [4.2 - SysRq REISUB](4-ubuntu-tweaks.md#42---sysrq-reisub)
+    - [4.2.1 - Restart](4-ubuntu-tweaks.md#421---restart)
+    - [4.2.2 - Shutdown](4-ubuntu-tweaks.md#422---shutdown)
+
+<br/>
+
 ## 4 - Ubuntu tweaks
 
 #### 4.1 - General tweaks
@@ -67,6 +77,7 @@ sudo ufw enable
 ```
 
 Folders as templates in Nautilus
+
 [link](https://bitbucket.org/edgimar/nautilus-new-folder-from-template/overview)
 
 Increase swapfile size (add 6 gigabytes, 6x1024)
@@ -85,6 +96,8 @@ dfconf-editor
 1) Go to `org > gnome > nautilus > preferences`
 2) Click on executable-text-activation
 3) Disable "use default value" and select from dropdown "launch" or "ask"
+
+<br/>
 
 Fix unusable USB to serial converters
 ```

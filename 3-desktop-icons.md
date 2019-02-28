@@ -1,6 +1,6 @@
-## 2 - Desktop icons
+## 3 - Desktop icons
 
-#### 2.1 - Launch Simplicity studio and chance theme (using script)
+#### 3.1 - Launch Simplicity studio and chance theme (using script)
 ```
 sudo gedit /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
     Name=Custom Simplicity Studio v4
@@ -29,7 +29,7 @@ sudo chmod a+x /home/brecht/Programs/SimplicityStudio_v4/run_studio.sh
 
 <br/>
 
-#### 2.2 - Headphone fix
+#### 3.2 - Headphone fix
 ```
 sudo gedit /usr/local/share/applications/headphonefix.desktop
     Name=Headphone fix
@@ -44,7 +44,7 @@ sudo chmod a+x /usr/local/share/applications/headphonefix.desktop
 
 <br/>
 
-#### 2.3 - Check USB to Serial converters
+#### 3.3 - Check USB to Serial converters
 ```
 sudo gedit /usr/local/share/applications/showserialadapters.desktop
     Name=Show USB to Serial (UART) converters

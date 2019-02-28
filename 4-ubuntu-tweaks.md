@@ -80,6 +80,8 @@ Folders as templates in Nautilus
 
 [link](https://bitbucket.org/edgimar/nautilus-new-folder-from-template/overview)
 
+<br/>
+
 Increase swapfile size (add 6 gigabytes, 6x1024)
 ```
 sudo swapoff /swapfile
@@ -87,6 +89,7 @@ sudo dd if=/dev/zero of=/swapfile bs=1M count=6144 oflag=append conv=notrunc
 sudo mkswap /swapfile
 sudo swapon /swapfile
 ```
+<br/>
 
 Make `.sh` files excecutable by nautilus on double click
 ```

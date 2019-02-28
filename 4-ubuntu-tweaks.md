@@ -2,11 +2,11 @@
 
 ## Table of contents
 
-[4 - Ubuntu tweaks](4-ubuntu-tweaks.md)
-- [4.1 - General tweaks](4-ubuntu-tweaks.md#41---general-tweaks)
-- [4.2 - SysRq REISUB](4-ubuntu-tweaks.md#42---sysrq-reisub)
-    - [4.2.1 - Restart](4-ubuntu-tweaks.md#421---restart)
-    - [4.2.2 - Shutdown](4-ubuntu-tweaks.md#422---shutdown)
+- [4 - Ubuntu tweaks](4-ubuntu-tweaks.md)
+    - [4.1 - General tweaks](4-ubuntu-tweaks.md#41---general-tweaks)
+    - [4.2 - SysRq REISUB](4-ubuntu-tweaks.md#42---sysrq-reisub)
+        - [4.2.1 - Restart](4-ubuntu-tweaks.md#421---restart)
+        - [4.2.2 - Shutdown](4-ubuntu-tweaks.md#422---shutdown)
 
 ------
 

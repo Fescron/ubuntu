@@ -4,39 +4,39 @@ This repository contains all of the commands I use/have used while running Ubunt
 
 <br/>
 
-### Table of contents
+## Table of contents
 
-[1 - General commands](1-general-commands.md)
-- 1.1 - GPIO stuff (µart-adapter)
-- 1.2 - USB stuff
-- 1.3 - File handling
-- 1.4 - Packages
-- 1.5 - youtube-dl
-- 1.6 - Conversions
-- 1.7 - Network
-    - 1.7.1 - Firewall
-    - 1.7.2 - DHCP
-    - 1.7.3 - OpenVPN
-- 1.8 - Interesting things
+[1 - General commands](1-general-commands.md#1---general-commands)
+- [1.1 - GPIO stuff (µart-adapter)](1-general-commands.md#11---gpio-stuff-µart-adapter)
+- [1.2 - USB stuff](1-general-commands.md#12---usb-stuff)
+- [1.3 - File handling](1-general-commands.md#13---file-handling)
+- [1.4 - Packages](1-general-commands.md#14---packages)
+- [1.5 - youtube-dl](1-general-commands.md#15---youtube-dl)
+- [1.6 - Conversions](1-general-commands.md#16---conversions)
+- [1.7 - Network](1-general-commands.md#17---network)
+    - [1.7.1 - Firewall](1-general-commands.md#171---firewall)
+    - [1.7.2 - DHCP](1-general-commands.md#172---dhcp)
+    - [1.7.3 - OpenVPN](1-general-commands.md#173---openvpn)
+- [1.8 - Other interesting commands](1-general-commands.md#18---other-interesting-commands)
 
-[2 - Timelapse to video with ffmpeg](2-timelapse-ffmpeg.md)
-- 2.1 - General commands
-- 2.2 - Options explained
+[2 - Timelapse to video with ffmpeg](2-timelapse-ffmpeg.md#2---timelapse-to-video-with-ffmpeg)
+- [2.1 - General commands](2-timelapse-ffmpeg.md#21---general-commands)
+- [2.2 - Options explained](2-timelapse-ffmpeg.md#22---options-explained)
 
-[3 - Desktop icons](3-desktop-icons.md)
-- 3.1 - Launch Simplicity studio and chance theme (using script)
-- 3.2 - Headphone fix
-- 3.3 - Check USB to Serial converters
+[3 - Desktop icons](3-desktop-icons.md#3---desktop-icons)
+- [3.1 - Launch Simplicity studio and chance theme (using script)](3-desktop-icons.md#31---launch-simplicity-studio-and-chance-theme-using-script)
+- [3.2 - Headphone fix](3-desktop-icons.md#32---headphone-fix)
+- [3.3 - Check USB to Serial converters](3-desktop-icons.md#33---check-usb-to-serial-converters)
+- [3.4 - Eclipse shortcut](3-desktop-icons.md#34---eclipse-shortcut)
 
-[4 - Ubuntu tweaks](4-ubuntu-tweaks.md)
-- 4.1 - 
+[4 - Ubuntu tweaks](4-ubuntu-tweaks.md#4---ubuntu-tweaks)
+- [4.1 - General tweaks](4-ubuntu-tweaks.md#41---general-tweaks)
+- [4.2 - SysRq REISUB](4-ubuntu-tweaks.md#42---sysrq-reisub)
+    - [4.2.1 - Restart](4-ubuntu-tweaks.md#421---restart)
+    - [4.2.2 - Shutdown](4-ubuntu-tweaks.md#422---shutdown)
 
 
 ------
-
-## 2 - Tweaks
-
-#### 2.1 - General tweaks
 
 Bulk convert JPGs to 1920x1080, centered
 ```
@@ -48,19 +48,7 @@ Renaming
 mkdir renamed; num=0; for f in $(ls -tr); do cp -p "$f" renamed/IMG_$(printf "%04d" $num).JPG; printf "\n\r$num"; num=$((num+1)); done
 ```
 
-<br/>
 
-#### 2.2 - SysRq REISUB
-
-Reboot linux systems gracefully, that often works to keep the file system healthy (in contrast to hard poweroff). SysRq is often on the PrintScreen key. `REISSUB = Reboot Even If System Utterly Broken`
-
-##### 2.2.1 - Restart
-1) Press `Alt` + `PrintScreen` continuously, sometimes the `Fn` key is involved too (in laptops).
-2) Slowly (one key after another) press the keys `R E I S U B` to reboot. When you press the "letter keys" you need not specify caps lock or shift.
-
-##### 2.2.2 - Shutdown
-1) Press `Alt` + `PrintScreen` continuously, sometimes the `Fn` key is involved too (in laptops).
-2) Slowly (one key after another) the keys `R E I S U O` to shut down. B "Boot" is replaced by O "Off".
 
 ------
 

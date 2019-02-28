@@ -8,7 +8,7 @@
     - [4.2.1 - Restart](4-ubuntu-tweaks.md#421---restart)
     - [4.2.2 - Shutdown](4-ubuntu-tweaks.md#422---shutdown)
 
-<br/>
+------
 
 ## 4 - Ubuntu tweaks
 

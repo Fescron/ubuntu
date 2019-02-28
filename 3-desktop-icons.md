@@ -8,7 +8,7 @@
 - [3.3 - Check USB to Serial converters](3-desktop-icons.md#33---check-usb-to-serial-converters)
 - [3.4 - Eclipse shortcut](3-desktop-icons.md#34---eclipse-shortcut)
 
-<br/>
+------
 
 ## 3 - Desktop icons
 

@@ -1,6 +1,6 @@
-# ubuntu
-
 ![Ubuntu logo](ubuntu_black-orange_hex.png)
+
+<br/>
 
 This repository contains all of the commands I use/have used while running Ubuntu.
 

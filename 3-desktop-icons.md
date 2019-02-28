@@ -5,6 +5,8 @@
 #### 3.1 - Launch Simplicity studio and chance theme (using script)
 ```
 sudo gedit /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
+
+    [Desktop Entry]
     Name=Custom Simplicity Studio v4
     Type=Application
     Exec=/home/brecht/Programs/SimplicityStudio_v4/run_studio.sh
@@ -34,6 +36,8 @@ sudo chmod a+x /home/brecht/Programs/SimplicityStudio_v4/run_studio.sh
 #### 3.2 - Headphone fix
 ```
 sudo gedit /usr/local/share/applications/headphonefix.desktop
+
+    [Desktop Entry]
     Name=Headphone fix
     Type=Application
     Exec=amixer -c 0 set 'Headphone Mic Boost',0 1
@@ -49,6 +53,8 @@ sudo chmod a+x /usr/local/share/applications/headphonefix.desktop
 #### 3.3 - Check USB to Serial converters
 ```
 sudo gedit /usr/local/share/applications/showserialadapters.desktop
+
+    [Desktop Entry]
     Name=Show USB to Serial (UART) converters
     Type=Application
     Exec=/home/brecht/Programs/0-scripts/showSerialAdapters.sh

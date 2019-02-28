@@ -2,7 +2,7 @@
 
 ## Table of contents
 
-[1 - General commands](1-general-commands.md#1---general-commands)
+[1 - General commands](1-general-commands.md)
 - [1.1 - GPIO stuff (µart-adapter)](1-general-commands.md#11---gpio-stuff-µart-adapter)
 - [1.2 - USB stuff](1-general-commands.md#12---usb-stuff)
 - [1.3 - File handling](1-general-commands.md#13---file-handling)

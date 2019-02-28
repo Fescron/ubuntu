@@ -54,3 +54,17 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -profile:v high422 -c
 **Unused options:**
 - `-preset veryfast` Encoding speed. A slower preset provides better compression (quality per file size) but is slower. Use the slowest that you have patience for.
   - Possibilities: `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium` (default), `slow`, `slower`, `veryslow`.
+
+<br/>
+
+#### 2.3 - Other useful commands
+
+Bulk convert JPGs to 1920x1080, centered
+```
+convert input.jpg -resize '1920x1080^' -gravity center -crop '1920x1080+0+0' output.jpg
+```
+
+Renaming
+```
+mkdir renamed; num=0; for f in $(ls -tr); do cp -p "$f" renamed/IMG_$(printf "%04d" $num).JPG; printf "\n\r$num"; num=$((num+1)); done
+```

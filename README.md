@@ -1,182 +1,36 @@
 # ubuntu
 
-This file contains all of the commands I use/have used while running Ubuntu.
+This repository contains all of the commands I use/have used while running Ubuntu.
 
 <br/>
 
-## 1 - General commands
+### Table of contents
 
-#### 1.1 - GPIO stuff (µart-adapter)
-```
-sudo gpiodetect
-sudo gpioinfo
+[1 - General commands](1-general-commands.md)
+- 1.1 - GPIO stuff (µart-adapter)
+- 1.2 - USB stuff
+- 1.3 - File handling
+- 1.4 - Packages
+- 1.5 - youtube-dl
+- 1.6 - Conversions
+- 1.7 - Network
+    - 1.7.1 - Firewall
+    - 1.7.2 - DHCP
+    - 1.7.3 - OpenVPN
+- 1.8 - Interesting things
 
-sudo gpioset gpiochip1 0=1  # Set GPO high
-sudo gpioset gpiochip1 0=0  # Set GPO low
-sudo gpioget gpiochip1 3    # Read GPI
-```
+[2 - Timelapse to video with ffmpeg](2-timelapse-ffmpeg.md)
+- 2.1 - General commands
+- 2.2 - Options explained
 
-Set GPO low for one second
-```
-sudo gpioset --mode=time --sec=1 gpiochip1 0=0; sudo gpioset gpiochip1 0=1
-```
+[3 - Desktop icons](3-desktop-icons.md)
+- 3.1 - Launch Simplicity studio and chance theme (using script)
+- 3.2 - Headphone fix
+- 3.3 - Check USB to Serial converters
 
-#### 1.2 - USB stuff
+[4 - Ubuntu tweaks](4-ubuntu-tweaks.md)
+- 4.1 - 
 
-Find UART to USB converter
-```
-dmesg | grep tt
-```
-
-List USB devices
-```
-lsusb
-```
-
-#### 1.3 - File handling
-
-Move RAF files to directory
-```
-mv *.RAF RAF
-```
-
-Find directory (case insensitive ("i"name), directories, wildcards with *)
-```
-sudo find / -iname '*qnap*' -type d
-```
-
-Fix locked folders (7: Full - Read, Write & Execute)
-```
-sudo chmod 777 -R /path/to/folder
-```
-
-Make directory
-```
-sudo mkdir /path/to/folder
-```
-
-Copy files
-```
-cp -a --verbose path/to/source/folder/. /path/to/destination/folder
-```
-
-#### 1.4 - Packages
-
-Package handling
-```
-aptitude
-```
-
-APT commands (better version op apt-get and apt-cache combined)
-```
-apt update        # Refreshes repository index
-apt upgrade       # Upgrades all upgradable packages
-
-apt instal        # Installs a package
-apt remove        # Removes a package
-apt purge         # Removes package with configuration
-apt autoremove    # Removes unwanted packages
-apt full-upgrade  # Upgrades packages with auto-handling of dependencies
-apt search        # Searches for the program
-apt show          # Shows package details
-apt list          # Lists packages with criteria (installed, upgradable etc)
-apt edit-sources  # Edits sources list
-```
-
-#### 1.5 - youtube-dl
-
-Install youtube-dl
-```
-sudo curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
-sudo chmod a+rx /usr/local/bin/youtube-dl
-```
-
-Update youtube-dl
-```
-youtube-dl -U
-```
-
-Download best mp4 format available or any other best if no mp4 available
-```
-youtube-dl -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' <Video-URL>
-```
-
-Download youtube videos as a best quality audio mp3
-```
-youtube-dl --extract-audio --audio-format mp3 --audio-quality 0 <Video-URL>
-```
-
-#### 1.6 - Conversions
-
-Combine MP4 & M4A
-```
-ffmpeg -i mpd.mp4 -i mpd.m4a -map 0:0 -map 1:0 -vcodec copy -acodec copy newvideo.mp4
-```
-
-Convert MP4 to MP3
-```
-ffmpeg -i 'input.mp4' -q:a 0 -map a 'output.mp3'
-```
-
-Convert color PDF to black & white
-```
-convert -density 300 -threshold 50% input.pdf output.pdf
-convert -verbose -density 300 -threshold 80% input.pdf output.pdf
-```
-
-#### 1.7 - Network
-
-##### 1.7.1 - Firewall
-
-Basic firewall stuff
-```
-sudo ufw enable
-sudo ufw disable
-sudo ufw status
-sudo ufw status verbose
-```
-
-Reset firewall rules to default values
-```
-sudo ufw reset
-```
-
-Allow specific ports through firewall
-```
-sudo ufw allow ssh
-sudo ufw allow 22/tcp
-sudo ufw allow 1716:1764/tcp
-sudo ufw allow 1716:1764/udp
-```
-
-Delete specific ports in firewall
-```
-ufw delete allow ssh
-```
-
-##### 1.7.2 - DHCP
-
-Release & renew DHCP IP
-```
-sudo dhclient -r; sudo dhclient
-```
-
-##### 1.7.3 - OpenVPN
-
-Launch & kill openvpn
-```
-sudo openvpn --config openvpn.ovpn
-sudo killall -SIGINT openvpn
-```
-
-#### 1.8 - Interesting things
-```
-cmatrix
-espeak "stuff goes here"
-aafire
-bb
-asciiquarium
-```
 
 ------
 
@@ -184,33 +38,17 @@ asciiquarium
 
 #### 2.1 - General tweaks
 
-Fix audio hissing (increase third option by one)
+Bulk convert JPGs to 1920x1080, centered
 ```
-alsamixer
-amixer -c 0 set 'Headphone Mic Boost',0 1; exit;
-```
-
-Launch program after startup
-```
-gnome-session-properties (or search for "startup applications")
+convert input.jpg -resize '1920x1080^' -gravity center -crop '1920x1080+0+0' output.jpg
 ```
 
-Change applications theme
+Renaming
 ```
-gsettings set org.gnome.desktop.interface gtk-theme "vimix-dark-laptop-ruby"
-gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
-```
-
-Disable Error Report Dialog Pop-up in Ubuntu 18.04
-```
-sudo gedit /etc/default/apport
-    enable=0
+mkdir renamed; num=0; for f in $(ls -tr); do cp -p "$f" renamed/IMG_$(printf "%04d" $num).JPG; printf "\n\r$num"; num=$((num+1)); done
 ```
 
-Shut down without the confirmation prompt
-```
-gsettings set org.gnome.SessionManager logout-prompt false
-```
+<br/>
 
 #### 2.2 - SysRq REISUB
 
@@ -254,6 +92,3 @@ cp -a --verbose source/. /media/usb/destination
 ```
 
 ------
-
-## 4 - Desktop icons
-

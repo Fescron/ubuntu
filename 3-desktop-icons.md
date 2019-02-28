@@ -18,8 +18,9 @@ sudo gedit /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
 sudo chmod a+x /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
 ```
 
-```
+```bash
 gedit /home/brecht/Programs/SimplicityStudio_v4/sudo_run_studio.sh
+
     #!/bin/bash
     gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
     cd /home/brecht/Programs/SimplicityStudio_v4/
@@ -65,8 +66,9 @@ sudo gedit /usr/local/share/applications/showserialadapters.desktop
 sudo chmod a+x /usr/local/share/applications/showserialadapters.desktop
 ```
 
-```
+```bash
 gedit /home/brecht/Programs/0-scripts/showSerialAdapters.sh
+
     #!/bin/bash
     dmesg | grep tty
     read

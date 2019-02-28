@@ -1,5 +1,13 @@
 [[Go back]](README.md)
 
+## Table of contents
+
+[2 - Timelapse to video with ffmpeg](2-timelapse-ffmpeg.md#2---timelapse-to-video-with-ffmpeg)
+- [2.1 - General commands](2-timelapse-ffmpeg.md#21---general-commands)
+- [2.2 - Options explained](2-timelapse-ffmpeg.md#22---options-explained)
+
+<br/>
+
 ## 2 - Timelapse to video with ffmpeg
 
 #### 2.1 - General commands

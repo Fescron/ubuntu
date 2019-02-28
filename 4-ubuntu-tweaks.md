@@ -39,7 +39,7 @@ gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
 Disable Error Report Dialog Pop-up in Ubuntu 18.04
 ```
 sudo gedit /etc/default/apport
-	enable=0
+    enable=0
 ```
 
 Shut down without the confirmation prompt
@@ -51,9 +51,9 @@ Run neofetch on terminal launch
 ```
 sudo nano ~/.bashrc
 
-	# On the bottom of the file add:
-	echo -e ""
-	neofetch
+    # On the bottom of the file add:
+    echo -e ""
+    neofetch
 ```
 
 Add new file option in nautalus
@@ -111,7 +111,7 @@ Add ArduinoISP udev rule
 ```
 sudo nano /etc/udev/rules.d/99-USBtiny.rules
 
-	SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0049", GROUP="adm", MODE="0666"
+    SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0049", GROUP="adm", MODE="0666"
 	
 sudo service udev restart
 sudo udevadm control --reload-rules

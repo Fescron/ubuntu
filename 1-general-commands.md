@@ -15,7 +15,7 @@
     - [1.7.3 - OpenVPN](1-general-commands.md#173---openvpn)
 - [1.8 - Other interesting commands](1-general-commands.md#18---other-interesting-commands)
 
-<br/>
+------
 
 ## 1 - General commands
 

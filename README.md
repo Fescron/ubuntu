@@ -22,6 +22,7 @@ This repository contains all of the commands I use/have used while running Ubunt
 [2 - Timelapse to video with ffmpeg](2-timelapse-ffmpeg.md#2---timelapse-to-video-with-ffmpeg)
 - [2.1 - General commands](2-timelapse-ffmpeg.md#21---general-commands)
 - [2.2 - Options explained](2-timelapse-ffmpeg.md#22---options-explained)
+- [2.3 - Other useful commands](2-timelapse-ffmpeg.md#23---other-useful-commands)
 
 [3 - Desktop icons](3-desktop-icons.md#3---desktop-icons)
 - [3.1 - Launch Simplicity studio and chance theme (using script)](3-desktop-icons.md#31---launch-simplicity-studio-and-chance-theme-using-script)
@@ -35,48 +36,4 @@ This repository contains all of the commands I use/have used while running Ubunt
     - [4.2.1 - Restart](4-ubuntu-tweaks.md#421---restart)
     - [4.2.2 - Shutdown](4-ubuntu-tweaks.md#422---shutdown)
 
-
-------
-
-Bulk convert JPGs to 1920x1080, centered
-```
-convert input.jpg -resize '1920x1080^' -gravity center -crop '1920x1080+0+0' output.jpg
-```
-
-Renaming
-```
-mkdir renamed; num=0; for f in $(ls -tr); do cp -p "$f" renamed/IMG_$(printf "%04d" $num).JPG; printf "\n\r$num"; num=$((num+1)); done
-```
-
-
-
-------
-
-## 3 - Rescue files using the terminal
-
-List disks
-```
-lsblk
-```
-
-Make mount directory
-```
-sudo  mkdir /media/usb
-```
-
-Mount drive
-```
-sudo mount /dev/sda1 /media/usb
-```
-
-Unmount (takes long time due to caching?)
-```
-sudo umount /media/usb
-```
-
-Copy files (the folder "source" is in the present directory, "destination" has been made on the drive with mkdir)
-```
-cp -a --verbose source/. /media/usb/destination
-```
-
-------
+[5 - Rescue files using the terminal](5-rescue-files.md#5---rescue-files-using-the-terminal)

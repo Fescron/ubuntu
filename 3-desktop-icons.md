@@ -1,3 +1,5 @@
+[[Go back]](README.md)
+
 ## 3 - Desktop icons
 
 #### 3.1 - Launch Simplicity studio and chance theme (using script)

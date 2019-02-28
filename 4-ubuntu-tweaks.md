@@ -2,6 +2,8 @@
 
 ## 4 - Ubuntu tweaks
 
+#### 4.1 - General tweaks
+
 Install exfat
 ```
 sudo apt install exfat-fuse exfat-utils
@@ -27,7 +29,7 @@ gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
 Disable Error Report Dialog Pop-up in Ubuntu 18.04
 ```
 sudo gedit /etc/default/apport
-    enable=0
+	enable=0
 ```
 
 Shut down without the confirmation prompt
@@ -39,9 +41,9 @@ Run neofetch on terminal launch
 ```
 sudo nano ~/.bashrc
 
-  # On the bottom of the file add
-  echo -e ""
-  neofetch
+	# On the bottom of the file add:
+	echo -e ""
+	neofetch
 ```
 
 Add new file option in nautalus
@@ -54,27 +56,10 @@ Add click on icon and minimize option
 gsettings set org.gnome.shell.extensions.dash-to-dock click-action 'minimize'
 ```
 
-# Eclipse shortcut
-gedit .local/share/applications/eclipse.desktop
-# In the file add
-	[Desktop Entry]
-	Name=Eclipse
-	Type=Application
-	Exec=/home/brecht/Programs/eclipse/eclipse-java/eclipse/eclipse
-	Terminal=false
-	Icon=/home/brecht/Programs/eclipse/eclipse-java/eclipse/icon.xpm
-	Comment=Integrated Development Environment
-	NoDisplay=false
-	Categories=Development;IDE;
-	Name[en]=Eclipse
-sudo update-desktop-database
-
-
 Change keyboard layout (belgian)
 ```
 sudo nano /usr/share/X11/xkb/symbols/be
 ```
-
 
 Setup firewall
 ```
@@ -82,8 +67,7 @@ sudo ufw enable
 ```
 
 Folders as templates in Nautilus
-[https://bitbucket.org/edgimar/nautilus-new-folder-from-template/overview]()
-
+[link](https://bitbucket.org/edgimar/nautilus-new-folder-from-template/overview)
 
 Increase swapfile size (add 6 gigabytes, 6x1024)
 ```
@@ -93,15 +77,14 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 ```
 
-
 Make `.sh` files excecutable by nautilus on double click
 ```
 apt install dconf-editor
-dfconf-editor 	# org > gnome > nautilus > preferences
-				# click on executable-text-activation
-				# disable "use default value" and select from dropdown "launch" or "ask"
+dfconf-editor
 ```
-
+1) Go to `org > gnome > nautilus > preferences`
+2) Click on executable-text-activation
+3) Disable "use default value" and select from dropdown "launch" or "ask"
 
 Fix unusable USB to serial converters
 ```
@@ -110,9 +93,25 @@ sudo adduser brecht dialout
 
 Add ArduinoISP udev rule
 ```
-sudo nano /etc/udev/rules.d/99-USBtiny.rules 
+sudo nano /etc/udev/rules.d/99-USBtiny.rules
+
 	SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0049", GROUP="adm", MODE="0666"
+	
 sudo service udev restart
 sudo udevadm control --reload-rules
 ```
+
+<br/>
+
+#### 4.2 - SysRq REISUB
+
+Reboot linux systems gracefully, that often works to keep the file system healthy (in contrast to hard poweroff). SysRq is often on the PrintScreen key. `REISSUB = Reboot Even If System Utterly Broken`
+
+##### 4.2.1 - Restart
+1) Press `Alt` + `PrintScreen` continuously, sometimes the `Fn` key is involved too (in laptops).
+2) Slowly (one key after another) press the keys `R E I S U B` to reboot. When you press the "letter keys" you need not specify caps lock or shift.
+
+##### 4.2.2 - Shutdown
+1) Press `Alt` + `PrintScreen` continuously, sometimes the `Fn` key is involved too (in laptops).
+2) Slowly (one key after another) the keys `R E I S U O` to shut down. B "Boot" is replaced by O "Off".
 

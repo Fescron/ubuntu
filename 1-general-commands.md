@@ -2,7 +2,8 @@
 
 ## 1 - General commands
 
-#### 1.1 - GPIO stuff (µart-adapter)
+#### [1.1 - GPIO stuff (µart-adapter)](#1-1)
+
 ```
 sudo gpiodetect
 sudo gpioinfo
@@ -19,7 +20,7 @@ sudo gpioset --mode=time --sec=1 gpiochip1 0=0; sudo gpioset gpiochip1 0=1
 
 <br/>
 
-#### 1.2 - USB stuff
+#### [1.2 - USB stuff](#1-2)
 
 Find UART to USB converter
 ```
@@ -33,7 +34,7 @@ lsusb
 
 <br/>
 
-#### 1.3 - File handling
+#### [1.3 - File handling](#1-3)
 
 Move RAF files to directory
 ```
@@ -62,7 +63,7 @@ cp -a --verbose path/to/source/folder/. /path/to/destination/folder
 
 <br/>
 
-#### 1.4 - Packages
+#### [1.4 - Packages](#1-4)
 
 Package handling
 ```
@@ -87,7 +88,7 @@ apt edit-sources  # Edits sources list
 
 <br/>
 
-#### 1.5 - youtube-dl
+#### [1.5 - youtube-dl](#1-5)
 
 Install youtube-dl
 ```
@@ -112,7 +113,7 @@ youtube-dl --extract-audio --audio-format mp3 --audio-quality 0 <Video-URL>
 
 <br/>
 
-#### 1.6 - Conversions
+#### [1.6 - Conversions](#1-6)
 
 Combine MP4 & M4A
 ```

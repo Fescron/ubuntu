@@ -36,10 +36,12 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -profile:v high422 -c
 
 <br/>
 
-**Other `-tune` options:**
+**Other** `-tune` **options:**
 - `-tune grain` -- This should be used for material that is already grainy. Here, the grain won't be filtered out as much.
 - `-tune fastdecode` -- Disables CABAC and the in-loop deblocking filter to allow for faster decoding on devices with lower computational power.
 - `-tune zerolatency` -- Optimization for fast encoding and low latency streaming.
+
+<br/>
 
 **Unused options:**
 - `-preset veryfast` -- Encoding speed. A slower preset provides better compression (quality per file size) but is slower. Use the slowest that you have patience for.

@@ -180,7 +180,7 @@ sudo killall -SIGINT openvpn
 
 <br/>
 
-#### 1.8 - Interesting things
+#### 1.8 - Other interesting commands
 ```
 cmatrix
 espeak "stuff goes here"

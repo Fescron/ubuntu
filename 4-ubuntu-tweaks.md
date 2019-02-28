@@ -39,6 +39,7 @@ gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
 Disable Error Report Dialog Pop-up in Ubuntu 18.04
 ```
 sudo gedit /etc/default/apport
+
     enable=0
 ```
 

@@ -19,10 +19,22 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv4
 ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale='min(2560,iw)':min'(1440,ih)':force_original_aspect_ratio=decrease,pad=2560:1440:(ow-iw)/2:(oh-ih)/2" 1440p-30fps.mp4
 ```
 
-Cropping
+Cropping from center
 ```
 ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160" 4k-30fps-crop.mp4
 ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440" 1440p-30fps-crop.mp4
+```
+
+Cropping from bottom
+```
+ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:oh" 4k-30fps-crop-bottom.mp4
+ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:oh" 1440p-30fps-crop-bottom.mp4
+```
+
+Cropping from top
+```
+ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:0" 4k-30fps-crop-top.mp4
+ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:0" 1440p-30fps-crop-top.mp4
 ```
 
 Other encoding profile, more contrast (may not work on every player)

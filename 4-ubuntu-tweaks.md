@@ -19,6 +19,11 @@ Install exfat
 sudo apt install exfat-fuse exfat-utils
 ```
 
+Fix QSync not being able to synchronize
+```
+sudo apt install libssl1.0
+```
+
 Fix audio hissing (increase third option by one)
 ```
 alsamixer

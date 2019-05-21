@@ -41,6 +41,11 @@ gsettings set org.gnome.desktop.interface gtk-theme "vimix-dark-laptop-ruby"
 gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
 ```
 
+Add startup sound (add following line in *"Startup Application Preferences"*)
+```
+paplay /usr/share/sounds/Yaru/stereo/desktop-login.ogg
+```
+
 Disable Error Report Dialog Pop-up in Ubuntu 18.04
 ```
 sudo gedit /etc/default/apport

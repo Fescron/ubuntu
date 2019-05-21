@@ -39,10 +39,10 @@ sudo chmod a+x /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
 gedit /home/brecht/Programs/SimplicityStudio_v4/sudo_run_studio.sh
 
     #!/bin/bash
-    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
+    gsettings set org.gnome.desktop.interface gtk-theme "Yaru"
     cd /home/brecht/Programs/SimplicityStudio_v4/
     ./run_studio.sh
-    gsettings set org.gnome.desktop.interface gtk-theme "vimix-dark-laptop-ruby"
+    gsettings set org.gnome.desktop.interface gtk-theme "Yaru-dark"
 ```
 
 ```

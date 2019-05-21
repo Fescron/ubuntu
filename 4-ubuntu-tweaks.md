@@ -43,7 +43,7 @@ gsettings set org.gnome.desktop.interface gtk-theme "Adwaita"
 
 Add startup sound (add following line in *"Startup Application Preferences"*)
 ```
-paplay /usr/share/sounds/Yaru/stereo/desktop-login.ogg
+paplay /usr/share/sounds/Yaru/stereo/desktop-login.oga
 ```
 
 Disable Error Report Dialog Pop-up in Ubuntu 18.04

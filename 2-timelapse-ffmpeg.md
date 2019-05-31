@@ -44,6 +44,11 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv4
 ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:0" 1440p-30fps-crop-top.mp4
 ```
 
+Adding a watermark
+```
+ffmpeg -i insta-4x5-30fps-crop.mp4 -r 30 -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "drawtext=text='@brecht.ve':x=10:y=H-th-13:fontfile='/home/brecht/.fonts/BebasNeue Light.otf':fontsize=35:fontcolor=white@0.65" insta-4x5-30fps-crop-watermark.mp4
+```
+
 Other encoding profile, more contrast (may not work on every player)
 ```
 ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -profile:v high422 -crf 20 -tune film -vf "scale='min(3840,iw)':min'(2160,ih)':force_original_aspect_ratio=decrease,pad=3840:2160:(ow-iw)/2:(oh-ih)/2" 4k-30fps-high422.mp4

@@ -24,6 +24,16 @@ Fix QSync not being able to synchronize
 sudo apt install libssl1.0
 ```
 
+Add "script" folder to $PATH so scripts can be executed anywhere
+```
+sudo gedit ~/.profile
+
+    # CUSTOM: set PATH so it includes the script folder
+    if [ -d "$HOME/Programs/0-scripts" ] ; then
+      PATH="$PATH:$HOME/Programs/0-scripts"
+    fi
+```
+
 Fix audio hissing (increase third option by one)
 ```
 alsamixer

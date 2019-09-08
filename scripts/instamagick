@@ -19,6 +19,7 @@ fontLocation="/home/brecht/.fonts/BebasNeue Book.otf"
 
 
 # TODO (future improvements):
+#  - Quit program from anywhere with "q"
 #  - Simplify code (more variables and less copy-paste of code...)
 #  - Bulk selection? ("-d " argument, DIRECTORY)
 #  - Add metadata (with other command line utility :/ )

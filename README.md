@@ -8,17 +8,18 @@ This repository contains all of the commands I use/have used while running Ubunt
 
 ## Table of contents
 
-- [1 - General commands](1-general-commands.md)
-    - [1.1 - GPIO stuff (µart-adapter)](1-general-commands.md#11---gpio-stuff-µart-adapter)
+- [1 - General commands](1-general-commands.md#1---general-commands)
+    - [1.1 - GNU Screen (serial console)](1-general-commands.md#11---gnu-screen-serial-console)
+    - [1.1 - GPIO stuff (µart-adapter)](1-general-commands.md#11---gpio-stuff-%c2%b5art-adapter)
     - [1.2 - USB stuff](1-general-commands.md#12---usb-stuff)
     - [1.3 - File handling](1-general-commands.md#13---file-handling)
     - [1.4 - Packages](1-general-commands.md#14---packages)
     - [1.5 - youtube-dl](1-general-commands.md#15---youtube-dl)
     - [1.6 - Conversions](1-general-commands.md#16---conversions)
     - [1.7 - Network](1-general-commands.md#17---network)
-        - [1.7.1 - Firewall](1-general-commands.md#171---firewall)
-        - [1.7.2 - DHCP](1-general-commands.md#172---dhcp)
-        - [1.7.3 - OpenVPN](1-general-commands.md#173---openvpn)
+      - [1.7.1 - Firewall](1-general-commands.md#171---firewall)
+      - [1.7.2 - DHCP](1-general-commands.md#172---dhcp)
+      - [1.7.3 - OpenVPN](1-general-commands.md#173---openvpn)
     - [1.8 - Other interesting commands](1-general-commands.md#18---other-interesting-commands)
 
 - [2 - Timelapse to video with ffmpeg](2-timelapse-ffmpeg.md)

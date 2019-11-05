@@ -27,7 +27,14 @@ Activate `GNU screen` on device `/dev/ttyACM0` with baudrate `115200` and use [G
 
 Use `CTRL + A` `K` to kill the current window.
 ```
+screen /dev/ttyUSB0 115200
 screen sed 's/\f/\o33[2J\o33[0;0H/g' /dev/ttyACM0 115200
+```
+
+Add the following in the `~/.screenrc` file in your home folder to also send a LF character when pressing the enter key.
+```
+# When entering, send CR and LF character instead of only CR
+bindkey "\015" stuff "\015\012"
 ```
 
 #### 1.1 - GPIO stuff (µart-adapter)

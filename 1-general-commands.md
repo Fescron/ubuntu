@@ -71,9 +71,9 @@ lsusb
 
 #### 1.3 - File handling
 
-Move RAF files to directory
+Move RAF files to (new) directory
 ```
-mv *.RAF RAF
+mkdir RAF; mv *.RAF RAF
 ```
 
 Find directory (case insensitive ("i"name), directories, wildcards with *)

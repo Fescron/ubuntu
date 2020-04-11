@@ -67,8 +67,8 @@ ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt y
 |---------|---------|
 | `-r 30` | Output frame rate |
 | `-pattern_type glob -i '*.JPG'` | All JPG files in the current directory |
-| `-pattern_type glob -i '*/*.JPG'` | All JPG files from all directories one level down from the current directory |
-| `-pattern_type glob -i '**/*.JPG'` |  All JPG files from all directories ALL levels down from the current directory (recursively) |
+| `'*/*.JPG'` | All JPG files from all directories, one level down from the current directory |
+| `'**/*.JPG'` |  All JPG files from all directories, all levels down from the current directory (recursively) |
 | `-vcodec libx264` | H.264 encoding (mp4) |
 | `-crf 20` | Constant Rate Factor (lower = better, anything below 18 might not be visually better, 23 default) 20 would be good since YouTube re-encodes the video again |
 | `-pix_fmt yuv420p` | Enable YUV planar color space with 4:2:0 chroma subsampling for H.264 video (so the output file works in QuickTime and most other players) |

@@ -59,6 +59,11 @@ Select all images in all subdirectories (recursively), don't crop/enlarge
 ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film timelapse-30fps.mp4
 ```
 
+Select all images in all subdirectories (recursively), don't crop/enlarge, upscale using `minterpolate` filter to 60fps for smoother looking timelapse
+```
+ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "minterpolate=fps=60" timelapse-30fps-upscaled-60fps.mp4
+```
+
 <br/>
 
 #### 2.2 - Options explained
@@ -73,6 +78,8 @@ ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt y
 | `-crf 20` | Constant Rate Factor (lower = better, anything below 18 might not be visually better, 23 default) 20 would be good since YouTube re-encodes the video again |
 | `-pix_fmt yuv420p` | Enable YUV planar color space with 4:2:0 chroma subsampling for H.264 video (so the output file works in QuickTime and most other players) |
 | `-tune film` | Intended for high-bitrate/high-quality movie content. Lower deblocking is used here. |
+| `-vf "minterpolate=fps=60"` | Use `minterpolate` videofilter to interpolate images and make a smoother video. (slow because only uses single CPU core) |
+
 
 <br/>
 

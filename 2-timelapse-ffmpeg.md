@@ -59,14 +59,9 @@ Select all images in all subdirectories (recursively), don't crop/enlarge
 ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film timelapse-30fps.mp4
 ```
 
-Select all images in all subdirectories (recursively), don't crop/enlarge, upscale using `minterpolate` filter to 60fps for smoother looking timelapse
+Select all images in (sub)directories with specific names (dates), don't crop/enlarge, increase framerate using `minterpolate` filter from 30 to 60fps for smoother looking timelapse
 ```
-ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "minterpolate=fps=60" timelapse-30fps-upscaled-60fps.mp4
-```
-
-Select all images in subdirectories with names `07 08 .. 19`, don't crop/enlarge, upscale using `minterpolate` filter to 60fps for smoother looking timelapse
-```
-ffmpeg -r 30 -pattern_type glob -i '{07,08,09,10,11,12,13,14,15,16,17,18,19}/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "minterpolate=fps=60" timelapse-30fps-upscaled-60fps-07-19.mp4
+ffmpeg -r 30 -pattern_type glob -i '2020-04-{02,03,04}/{07,08,09}/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "minterpolate=fps=60" timelapse-blurred.mp4
 ```
 
 <br/>

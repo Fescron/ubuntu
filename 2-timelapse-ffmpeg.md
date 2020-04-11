@@ -83,7 +83,7 @@ ffmpeg -r 30 -pattern_type glob -i '{07,08,09,10,11,12,13,14,15,16,17,18,19}/*.j
 | `-crf 20` | Constant Rate Factor (lower = better, anything below 18 might not be visually better, 23 default) 20 would be good since YouTube re-encodes the video again |
 | `-pix_fmt yuv420p` | Enable YUV planar color space with 4:2:0 chroma subsampling for H.264 video (so the output file works in QuickTime and most other players) |
 | `-tune film` | Intended for high-bitrate/high-quality movie content. Lower deblocking is used here. |
-| `-vf "minterpolate=fps=60"` | Use `minterpolate` videofilter to interpolate images and make a smoother video. (slow because only uses single CPU core) |
+| `-vf "minterpolate=fps=60"` | Use `minterpolate` videofilter to interpolate images and make a smoother video. **Slow because only uses single CPU core!** |
 
 
 <br/>

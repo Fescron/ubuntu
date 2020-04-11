@@ -64,6 +64,11 @@ Select all images in all subdirectories (recursively), don't crop/enlarge, upsca
 ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "minterpolate=fps=60" timelapse-30fps-upscaled-60fps.mp4
 ```
 
+Select all images in subdirectories with names `07 08 .. 10`, don't crop/enlarge, upscale using `minterpolate` filter to 60fps for smoother looking timelapse
+```
+ffmpeg -r 30 -pattern_type glob -i '{07,08,09,10,11,12,13,14,15,16,17,18,19}/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "minterpolate=fps=60" timelapse-30fps-upscaled-60fps-07-19.mp4
+```
+
 <br/>
 
 #### 2.2 - Options explained

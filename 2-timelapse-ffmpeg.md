@@ -54,6 +54,11 @@ Other encoding profile, more contrast (may not work on every player)
 ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -profile:v high422 -crf 20 -tune film -vf "scale='min(3840,iw)':min'(2160,ih)':force_original_aspect_ratio=decrease,pad=3840:2160:(ow-iw)/2:(oh-ih)/2" 4k-30fps-high422.mp4
 ```
 
+Select all images in all subdirectories (recursively), don't crop/enlarge (when only one sub-layer is necessary `*/*.jpg` is sufficient)
+```
+ffmpeg -r 30 -pattern_type glob -i '**/*.jpg' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film timelapse-30fps.mp4
+```
+
 <br/>
 
 #### 2.2 - Options explained

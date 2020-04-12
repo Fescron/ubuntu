@@ -166,6 +166,12 @@ convert -density 300 -threshold 50% input.pdf output.pdf
 convert -verbose -density 300 -threshold 80% input.pdf output.pdf
 ```
 
+Reduce image size
+```
+mogrify -path smaller -format jpg -resize 40% *.jpg
+mogrify -path smaller -format pdf -resize 40% *.pdf
+```
+
 <br/>
 
 #### 1.7 - Network

@@ -40,6 +40,7 @@ This repository contains all of the commands I use/have used while running Ubunt
     - [4.2.1 - Restart](4-ubuntu-tweaks.md#421---restart)
     - [4.2.2 - Shutdown](4-ubuntu-tweaks.md#422---shutdown)
   - [4.3 - Ubuntu 20.04](4-ubuntu-tweaks.md#43---ubuntu-2004)
+    - [4.3.1 - SSH](4-ubuntu-tweaks.md#431---ssh)
 
 - [5 - Rescue files using the terminal](5-rescue-files.md)
 

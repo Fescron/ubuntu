@@ -11,6 +11,7 @@
     - [4.2.1 - Restart](#421---restart)
     - [4.2.2 - Shutdown](#422---shutdown)
   - [4.3 - Ubuntu 20.04](#43---ubuntu-2004)
+    - [4.3.1 - SSH](#431---ssh)
 
 <br/>
 
@@ -255,3 +256,36 @@ Change *formats*
 4) Select `Dutch`.
 5) Now select in the tab `Regional Formats` `Nederlands (België)` for the numbers.
 6) Restart the computer.
+
+<br/>
+
+#### 4.3.1 - SSH
+
+Installation
+
+```bash
+sudo apt install openssh-server   # Install SSH server
+systemctl status sshd             # Check status of SSH server daemon
+
+sudo systemctl start ssh          # Start SSH server daemon
+sudo systemctl stop ssh           # Stop SSH server daemon
+sudo systemctl restart ssh        # Restart SSH server daemon
+
+sudo ufw allow ssh                # Open SSH port 22 for incoming traffic on firewall
+
+sudo systemctl enable ssh         # Enable SSH server to automatically start during boot
+
+sudo nano /etc/ssh/sshd_config    # Change default port to another above 1024
+    Port XXXX
+sudo ufw allow XXXX/tcp           # Open firewall port to correspond with new one
+sudo systemctl restart ssh        # Apply change
+```
+
+<br/>
+
+Connection
+
+```bash
+ssh username@hostname-or-ip-address
+ssh -p port username@hostname-or-ip-address
+```

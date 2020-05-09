@@ -1,26 +1,35 @@
 [[Go back]](README.md)
 
+<br/>
+
 ## Table of contents
 
-- [3 - Desktop icons](3-desktop-icons.md)
-    - [3.1 - Launch Simplicity studio and chance theme (using script)](3-desktop-icons.md#31---launch-simplicity-studio-and-chance-theme-using-script)
-    - [3.2 - Headphone fix](3-desktop-icons.md#32---headphone-fix)
-    - [3.3 - Check USB to Serial converters](3-desktop-icons.md#33---check-usb-to-serial-converters)
-    - [3.4 - Eclipse shortcut](3-desktop-icons.md#34---eclipse-shortcut)
+- [Table of contents](#table-of-contents)
+- [3 - Desktop icons](#3---desktop-icons)
+  - [3.1 - Launch Simplicity studio and chance theme (using script)](#31---launch-simplicity-studio-and-chance-theme-using-script)
+  - [3.2 - Headphone fix](#32---headphone-fix)
+  - [3.3 - Check USB to Serial converters](#33---check-usb-to-serial-converters)
+  - [3.4 - Eclipse shortcut](#34---eclipse-shortcut)
+
+<br/>
 
 ------
 
+<br/>
+
 ## 3 - Desktop icons
 
-After all of the changes use:
-```
+After all of the changes use
+
+```bash
 sudo update-desktop-database
 ```
 
 <br/>
 
-#### 3.1 - Launch Simplicity studio and chance theme (using script)
-```
+### 3.1 - Launch Simplicity studio and chance theme (using script)
+
+```bash
 sudo gedit /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
 
     [Desktop Entry]
@@ -31,9 +40,13 @@ sudo gedit /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
     Description=Change theme
 ```
 
-```
+<br/>
+
+```bash
 sudo chmod a+x /usr/local/share/applications/custom-SimplicityStudio_v4.desktop
 ```
+
+<br/>
 
 ```bash
 gedit /home/brecht/Programs/SimplicityStudio_v4/sudo_run_studio.sh
@@ -45,14 +58,17 @@ gedit /home/brecht/Programs/SimplicityStudio_v4/sudo_run_studio.sh
     gsettings set org.gnome.desktop.interface gtk-theme "Yaru-dark"
 ```
 
-```
+<br/>
+
+```bash
 sudo chmod a+x /home/brecht/Programs/SimplicityStudio_v4/run_studio.sh
 ```
 
 <br/>
 
-#### 3.2 - Headphone fix
-```
+### 3.2 - Headphone fix
+
+```bash
 sudo gedit /usr/local/share/applications/headphonefix.desktop
 
     [Desktop Entry]
@@ -62,14 +78,17 @@ sudo gedit /usr/local/share/applications/headphonefix.desktop
     Terminal=true
 ```
 
-```
+<br/>
+
+```bash
 sudo chmod a+x /usr/local/share/applications/headphonefix.desktop
 ```
 
 <br/>
 
-#### 3.3 - Check USB to Serial converters
-```
+### 3.3 - Check USB to Serial converters
+
+```bash
 sudo gedit /usr/local/share/applications/showserialadapters.desktop
 
     [Desktop Entry]
@@ -79,9 +98,13 @@ sudo gedit /usr/local/share/applications/showserialadapters.desktop
     Terminal=true
 ```
 
-```
+<br/>
+
+```bash
 sudo chmod a+x /usr/local/share/applications/showserialadapters.desktop
 ```
+
+<br/>
 
 ```bash
 gedit /home/brecht/Programs/0-scripts/showSerialAdapters.sh
@@ -91,14 +114,17 @@ gedit /home/brecht/Programs/0-scripts/showSerialAdapters.sh
     read
 ```
 
-```
+<br/>
+
+```bash
 sudo chmod a+x /home/brecht/Programs/0-scripts/showSerialAdapters.sh
 ```
 
 <br/>
 
-#### 3.4 - Eclipse shortcut
-```
+### 3.4 - Eclipse shortcut
+
+```bash
 gedit .local/share/applications/eclipse.desktop
 
     [Desktop Entry]

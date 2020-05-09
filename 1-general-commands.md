@@ -136,11 +136,11 @@ cp -a --verbose path/to/source/folder/. /path/to/destination/folder
 Sync files from `SOURCE` to `DEST` (*mounted* hard drive) path and connect to the rsync daemon running on a server with `IPADDR` and `USER`
 
 ```bash
-rsync --dry-run --exclude '@*' -avzP rsync://USER@IPADDR:/SOURCE /mnt/DEST
+rsync --dry-run --exclude '@*' --exclude '.@*' -azh --info=progress2 --stats rsync://USER@IPADDR:/SOURCE /mnt/DEST
 ```
 
 - `--dry-run` test the settings, **remove to copy the files for real**
-- `--exclude '@*'` exclude files/folders starting with `@`
+- `--exclude '@*' --exclude '.@*'` exclude files/folders starting with `@` and `.@*`
 - `-a` archive mode,  equivalent to the following options
   - `-r`, `--recursive` recurse into directories
   - `-l`, `--links` copy symlinks as symlinks
@@ -156,8 +156,23 @@ rsync --dry-run --exclude '@*' -avzP rsync://USER@IPADDR:/SOURCE /mnt/DEST
     - `-A`, `--acls` preserve ACLs (implies `-p`)
     - `-X`, `--xattrs` preserve extended attributes
   - **Watch out!** rsync can't use `-a` when the target is an exFAT drive because it doesn't handle permissions on this file system. Use `-rlD` instead.
-- `-v` verbose output
 - `-z` compress file data during transfer
+- `-h`, `--human-readable` output numbers in a more human-readable format (large numbers get converted to ones with a K, M, or G suffix)
+- `--stats` print a verbose set of statistics on the file transfer after it's finished
+- `--info=progress2` for example, the output `105.45M 13% 602.83kB/s 0:02:50 (xfr#495, ir-chk=1020/3825)` means the following ([source](https://unix.stackexchange.com/questions/215271/understanding-the-output-of-info-progress2-from-rsync))
+  - So far 105.45 megabytes (or 13%) of the approximately 811.15 megabytes (100%) of the files have been reconstructed.
+  - The files are being reconstructed at a rate of 602.83 kilobytes per second.
+  - The current elapsed time is 2 minutes and 50 seconds.
+  - `xfr#495` means that currently the 495th file is being transferred.
+  - `ir-chk=1020/3825` indicates that, out of a total of (so far) 3825 files recursively scanned (detected), so far 1020 of them are still to be checked/verified.
+    - `ir-chk` (incremental recursion check) is displayed until all files are recursively scanned. The number on both sides is incremented.
+    - `to-chk` is displayed when all the files are found. The second number now stays constant and the first will decrease until it's zero.
+
+<br/>
+
+Unused options
+
+- `-v` verbose output
 - `-P` equivalent to `--partial --progress`
   - `--partial` preserve partial files
   - `--progress` display progress

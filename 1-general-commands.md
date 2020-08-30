@@ -30,12 +30,20 @@
 
 ### 1.1 - GNU Screen (serial console)
 
-Activate `GNU screen` on device `/dev/ttyACM0` with baudrate `115200` and use [GNU sed](https://www.gnu.org/software/sed/) to replace the `Form Feed` (`\f`) escape sequence with the correct [ANSI Escape code](http://c-faq.com/osdep/termcap.html) to get the same form feed behaviour as in [Putty](https://www.putty.org/).
+Activate `GNU screen` on device `/dev/ttyUSB0` with baudrate `115200`.
 
 Use `CTRL + A` `K` to kill the current window.
 
 ```bash
 screen /dev/ttyUSB0 115200
+```
+<br/>
+
+Activate `GNU screen` on device `/dev/ttyACM0` with baudrate `115200` and use [GNU sed](https://www.gnu.org/software/sed/) to replace the `Form Feed` (`\f`) escape sequence with the correct [ANSI Escape code](http://c-faq.com/osdep/termcap.html) to get the same form feed behaviour as in [Putty](https://www.putty.org/).
+
+Use `CTRL + A` `K` to kill the current window.
+
+```bash
 screen sed 's/\f/\o33[2J\o33[0;0H/g' /dev/ttyACM0 115200
 ```
 

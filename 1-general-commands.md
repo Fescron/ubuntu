@@ -49,11 +49,14 @@ screen sed 's/\f/\o33[2J\o33[0;0H/g' /dev/ttyACM0 115200
 
 <br/>
 
-Add the following in the `~/.screenrc` file in your home folder to also send a LF character when pressing the enter key.
+Tweaks for in the `~/.screenrc` file in the home folder.
 
 ```bash
 # When entering, send CR and LF character instead of only CR
 bindkey "\015" stuff "\015\012"
+
+# Enable mouse scrolling and scroll bar history scrolling
+termcapinfo xterm* ti@:te@
 ```
 
 <br/>

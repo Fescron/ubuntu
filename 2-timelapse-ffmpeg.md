@@ -75,7 +75,7 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv4
 Adding a watermark
 
 ```bash
-ffmpeg -i insta-4x5-30fps-crop.mp4 -r 30 -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "drawtext=text='@brecht.ve':x=10:y=H-th-13:fontfile='/home/brecht/.fonts/BebasNeue Light.otf':fontsize=35:fontcolor=white@0.65" insta-4x5-30fps-crop-watermark.mp4
+ffmpeg -i insta-4x5-30fps-crop.mp4 -r 30 -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "drawtext=text='@brecht.ve':x=10:y=H-th-13:fontfile='/home/brecht/.fonts/BebasNeue Book.otf':fontsize=35:fontcolor=white@0.65" insta-4x5-30fps-crop-watermark.mp4
 ```
 
 <br/>
@@ -143,7 +143,7 @@ ffmpeg -r 45 -pattern_type glob -i '2020-04-{02,03,04}/{07,08,09}/*.jpg' -vcodec
 
 ### 2.3 - Other useful commands
 
-Bulk convert JPGs to 1920x1080, centered
+Convert JPGs to 1920x1080, centered
 
 ```bash
 convert input.jpg -resize '1920x1080^' -gravity center -crop '1920x1080+0+0' output.jpg

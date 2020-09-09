@@ -46,6 +46,12 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv4
 ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566" insta-5x4-30fps-crop.mp4
 ```
 
+If the images were taken in portrait orientation, use the following command to make sure the EXIF data is reflected in the image size.
+
+```bash
+mogrify -auto-orient *.JPG
+```
+
 <br/>
 
 Cropping from bottom

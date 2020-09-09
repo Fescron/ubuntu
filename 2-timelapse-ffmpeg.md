@@ -41,9 +41,9 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv4
 Cropping from center (Instagram)
 
 ```bash
-ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080" insta-1x1-30fps-crop.mp4
-ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350" insta-4x5-30fps-crop.mp4
-ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566" insta-5x4-30fps-crop.mp4
+ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080" 0-insta-1x1-30fps-crop.mp4
+ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350" 0-insta-4x5-30fps-crop.mp4
+ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566" 0-insta-5x4-30fps-crop.mp4
 ```
 
 If the images were taken in portrait orientation, use the following command to make sure the EXIF data is reflected in the image size.
@@ -75,7 +75,7 @@ ffmpeg -r 30 -pattern_type glob -i '*.JPG' -vcodec libx264 -crf 20 -pix_fmt yuv4
 Adding a watermark
 
 ```bash
-ffmpeg -i insta-4x5-30fps-crop.mp4 -r 30 -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "drawtext=text='@brecht.ve':x=10:y=H-th-13:fontfile='/home/brecht/.fonts/BebasNeue Book.otf':fontsize=35:fontcolor=white@0.65" insta-4x5-30fps-crop-watermark.mp4
+ffmpeg -i 0-insta-4x5-30fps-crop.mp4 -r 30 -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film -vf "drawtext=text='@brecht.ve':x=10:y=H-th-13:fontfile='/home/brecht/.fonts/BebasNeue Book.otf':fontsize=35:fontcolor=white@0.65" 0-insta-4x5-30fps-crop-watermark.mp4
 ```
 
 <br/>

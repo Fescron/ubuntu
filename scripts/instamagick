@@ -1,25 +1,29 @@
 #!/bin/bash
 
 # ================================================================== #
-# Script to move RAF files into a (new) RAF directory, easily resize #
-# and watermark pictures using ImageMagick, reduce the filesize of   #
-# pictures (using mogrify/convert) or PDF files (using ghostscript)  #
-# and create timelapses from pictures using ffmpeg. If necessary the #
+# Script to move images in folders by their 'CreateDate', move       #
+# RAF-files into a (new) RAF directory, easily resize and watermark  #
+# pictures using ImageMagick, reduce the filesize of pictures        #
+# (using mogrify/convert) or PDF files (using ghostscript) and       #
+# create timelapses from pictures using ffmpeg. If necessary the     #
 # pictures get rotated using exiftran and a backup of the original   #
 # file is made by putting a "~" after the extension.                 #
 #                                                                    #
 #   Call this script and point it to the PATH of the picture         #
 #   with the FIRST ARGUMENT after the script call.                   #
 #                                                                    #
-# Brecht Van Eeckhoudt - 21/09/2020 (development started 22/08/2019) #
+# Brecht Van Eeckhoudt - 23/09/2020 (development started 22/08/2019) #
 # Written on Ubuntu 19.04                                            #
 # ================================================================== #
 
 # Version of this script (date)
-version="21/09/2020"
+version="23/09/2020"
 
 # Location of the font to use for watermarking
 fontLocation="/home/brecht/.fonts/BebasNeue Book.otf"
+
+# Default watermarking text
+watermarkText="@brecht.ve"
 
 
 
@@ -27,15 +31,17 @@ fontLocation="/home/brecht/.fonts/BebasNeue Book.otf"
 #  - Check left/right (/bottom) crop functionality for timelapses
 #      => 21/09/2020: Changed "ow"/"oh" to "iw"/"ih" for left/right/bottom crop functionality for options 2-6 because "ih" gave problems for 4k bottom timelapse cropping...
 #                     Probably needs more testing to be sure, see "Not tested yet!" echo messages!
+#  - Simplify resizePicture (and makeTimelapse) code: Use (global, at the top of the file) variables for arguments that always are the same
+#  - Add kerning functionality to watermarking text of timelapses (4k = 2.11 // 1440p = 1.51 // insta = 1.01)
+#  - Add option to change Artist and Copyright fields
+#  - Add option to remove metadata (https://superuser.com/questions/450838/exiftool-delete-exif-data-but-preserve-some-specific-tags/450853#450853)
+#  - Add option to give a path as an argument to the script and make a timelapse there
 #  - Add watermarking functionality to nocrop timelapse options
 #  - Add -h and --help script argument
-#  - Add kerning functionality to watermarking text of timelapses (4k = 2.11 // 1440p = 1.51 // insta = 1.01)
 #  - Make sure $foldername can also work if a full path has been given and the script isn't executed in the main directory
-#  - Simplify resizePicture and makeTimelapse code (excecuteXXX with passed/global variables)
 #  - Add watermarking option with PNG's
 #  - Add watermarking for 35mm?
 #  - Bulk selection? ("-d " argument, DIRECTORY)
-#  - Add metadata (author, timelapse settings, ... )
 #  - Add small white borders to left and right of instagram pictures? (-bordercolor white -border 5x0)
 
 
@@ -48,43 +54,101 @@ fontLocation="/home/brecht/.fonts/BebasNeue Book.otf"
 
 main () {
     # echo "-e" for enabling escape sequences
+    # echo "-n" for not advancing to the next line
     #   - "\e[1m"  = bold
     #   - "\e[93m" = light yellow
     #   - "\e[0m"  = reset all attributes
+    # read "-p" makes it read as a prompt, meaning it doesn't add a trailing newline before trying to read input.
+    # read "-r" (raw) tells read to not treat backslashes specially
 
-    echo -e "\n\e[1m\e[93mInstaMagick // Brecht Van Eeckhoudt - $version\e[0m\n"
+    # Set IFS to an empty string to retain leading and trailing whitespace when using "read"
+    IFS=
 
+    echo -e "\n\e[1m\e[93mInstaMagick // Comprehensive image manipulation script.\e[0m"
+    echo -e "\e[93m   Makes use of ImageMagick (and convert and mogrify),"
+    echo    "   ghostscript, ffmpeg, exiftool and exiftran."
+    echo -e "\e[1mBrecht Van Eeckhoudt ($version)\e[0m\n"
+    echo -e "\e[93m<<< Press \e[1mENTER\e[0m\e[93m to choose default value and \e[1mCTRL + C\e[0m\e[93m to quit >>>\n"
+    
     echo -e "\e[93mWhat do you want to do?"
-    echo "  Options: '0' = Move RAF files into a (new) RAF directory"
-    echo "           '1' = Resize picture and optionally add a watermark (text)"
-    echo "           '2' = Compress picture(s)"
-    echo "           '3' = Compress PDF document"
-    echo "           '4' = Create a timelapse"
+    echo "  Options: '0' = Move images in new directories based on their 'CreateDate'"
+    echo "           '1' = Move RAF files into a (new) RAF directory"
+    echo "           '2' = Read metadata of a file (ImageCount, ...)"
+    echo "           '3' = Resize picture and optionally add a watermark (text)"
+    echo "           '4' = Compress picture(s)"
+    echo "           '5' = Compress PDF document"
+    echo "           '6' = Create a timelapse"
     read -p $'Selected option: \e[0m' selection
 
     case $selection in
-        # Moving RAF files into directory
+        # Move images in new directories based on their 'CreateDate'
+        #   -DateTimeOriginal = time of shutter actuation
+        #   -CreateDate = time of file write to memory card
         '0')
+            read -p $'\n\e[93m  What is the extension of the images? (default = \e[0mJPG\e[93m) \e[0m' extension
 
-            # "-n" for not advancing to the next line
+            # Check if an argument was given, if not: use default JPG extension (-z = string is null, has zero length)
+            if [ -z "$extension" ]
+            then
+                extension="JPG"
+            fi
+
+            echo -e "\n\e[93mMoving images... \e[0m"
+
+            # Move pictures in new directories based on their CreateDate (-r = run recursively)
+            exiftool '-Directory<CreateDate' -d ./%Y-%m-%d -r *.$extension
+
+            echo -e "\e[93mDone!\e[0m\n"
+            ;;
+
+        # Move RAF files into a (new) RAF directory
+        '1')
             echo -n -e "\n\e[93mMoving files... \e[0m"
 
             mkdir RAF; mv *.RAF RAF
+
             echo -e "\e[93mDone! All of the RAF files are moved to the directory '\e[0mRAF\e[93m'.\e[0m\n"
+            ;;
+        
+        # Read metadata of a file
+        '2')
+            # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
+            checkInput "$@"
+
+            echo -e "\e[93m\nRead metadata:\e[0m"
+
+            # -g = Show the group names (g1 shows the family 1 group name (ie. the location) of each tag)
+            # -a = Allow duplicate tags to be extracted
+            # --UserComment = Exclude tag from extracted information
+            # TODO unused arguments (kept here just in case):
+            #   -v = Verbose
+            #   -s = Show the tag names instead of their descriptions (short) (-s2 is a compact version of this, -s3 only returns the value itself)
+            #   -S = very short notation
+            exiftool -g -a --UserComment "$filepath"
+
+            # Read UserComment metadata-field
+            readUserComment=$(exiftool -s3 -UserComment "$filepath")
+
+            if [ -n "$readUserComment"  ] # Check if UserComment contains data (-n = string is not null)
+            then
+                echo -e "---- UserComment ----"
+                exiftool -b -UserComment "$filepath" # Read only UserComment in binary format (makes \n work...)
+            fi
+
+            echo # Blank line
             ;;
 
         # Resizing pictures (with/without watermarking)
-        '1')
+        '3')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
             # Call logic
             resizePicture
-
             ;;
 
         # Compressing pictures
-        '2')
+        '4')
             echo -e "\n\e[93mDo you want to compress all of the pictures in the directory?"
             echo "  Options: 'y' = Yes"
             echo "           'n' = No (default)"
@@ -94,23 +158,22 @@ main () {
             case $resizing in
                 # Yes
                 'y'|'Y')
-                    read -p $'\n\e[93m  What is the extension of the images? (default = \'JPG\') \e[0m' extension
+                    read -p $'\n\e[93m  What is the extension of the images? (default = \e[0mJPG\e[93m) \e[0m' extension
 
-                    # Check if an argument was given, if not: use default JPG extension
-                    if [ -z $extension ]
+                    # Check if an argument was given, if not: use default JPG extension (-z = string is null, has zero length)
+                    if [ -z "$extension" ]
                     then
                         extension="JPG"
                     fi
                     
-                    read -p $'\n\e[93m  What should the reduction factor be? (0 - 100 (%), default = 85%) \e[0m' reduction
+                    read -p $'\n\e[93m  What should the reduction factor be? (0 - 100 (%), default = \e[0m85\e[93m%) \e[0m' reduction
  
-                    # Check if an argument was given, if not: use default value of 85
-                    if [ -z $reduction ]
+                    # Check if an argument was given, if not: use default value of 85 (-z = string is null, has zero length)
+                    if [ -z "$reduction" ]
                     then
                         reduction=85
                     fi
 
-                    # "-n" for not advancing to the next line
                     echo -n -e "\n\e[93mConverting... \e[0m"
 
                     mkdir compressed; mogrify -path compressed -format $extension -resize $reduction% *.$extension
@@ -123,15 +186,14 @@ main () {
                     # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
                     checkInput "$@"
 
-                    read -p $'\n\e[93m  What should the reduction factor be? (0 - 100 (%), default = 85%) \e[0m' reduction
+                    read -p $'\n\e[93m  What should the reduction factor be? (0 - 100 (%), default = \e[0m85\e[93m%) \e[0m' reduction
 
-                    # Check if an argument was given, if not: use default value of 85
-                    if [ -z $reduction ]
+                    # Check if an argument was given, if not: use default value of 85 (-z = string is null, has zero length)
+                    if [ -z "$reduction" ]
                     then
                         reduction=85
                     fi
 
-                    # "-n" for not advancing to the next line
                     echo -n -e "\n\e[93mConverting... \e[0m"
 
                     convert -resize $reduction%  $filepath "$filename"-compressed.$extension # Quote marks so spaces can exist in the filepath
@@ -147,11 +209,10 @@ main () {
             ;;
 
         # Compress PDF document
-        '3')
+        '5')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
-            # "-n" for not advancing to the next line
             echo -n -e "\n\e[93mConverting... \e[0m"
 
             gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dPrinted=false -dPDFSETTINGS=/prepress \
@@ -161,7 +222,7 @@ main () {
             ;;
 
         # Timelapse creation
-        '4')
+        '6')
             # Call logic
             makeTimelapse
             ;;
@@ -171,6 +232,106 @@ main () {
             echo -e "\e[91mERROR: Unknown option selected. Goodbye!\e[0m\n"
             ;;
     esac
+}
+
+
+# ========================================== #
+# FUNCTION TO ADD METADATA TO TIMELAPSE FILE #
+# ========================================== #
+
+checkMetadata () {
+    extraMetadataGiven=false
+
+    # TODO When metadata needs to be copied over using ffmpeg: -movflags use_metadata_tags = allow custom tags (kept here just in case)
+    # ffmpeg -i input.mp4 -movflags use_metadata_tags -metadata newTag="newTag" output.mp4
+
+    # TODO MakerNotes can only be transferred as a whole block (between images) and make/model also has to be copied over! (kept here just in case)
+    # exiftool -tagsFromFile input.jpg -makernotes -make -model output.jpg
+
+    echo -e "\n\e[93mDo you want to add extra metadata-info? (location, time between each shot,...)"
+    read -r -p $'  Press enter if not, otherwise enter text: \e[0m' extraMetadata
+
+    # Check if an argument was given (-n = string is not null)
+    if [ -n "$extraMetadata" ]
+    then
+        extraMetadataGiven=true
+    fi
+
+    # Read CreateDate from first image of timelapse (-s3 = only return value itself)
+    readCreateDate=$(exiftool -s3 -CreateDate "$firstImage")
+
+    # Read Make and Model from first image of timelapse
+    readMakeModel=$(exiftool -Make -Model "$firstImage")
+
+    # Read ISO and ExposureTime (~ ShutterSpeedValue) from first image of timelapse
+    readISOExposureTime=$(exiftool -ISO -ExposureTime "$firstImage")
+
+    echo -e "\n\e[93mIs the following other metadata correct?"
+    echo -e "Press enter if true, otherwise enter text to replace current value.\e[0m"
+
+    # Read FNumber (~ ApertureValue) from first image of timelapse (-s3 = only return value itself)   
+    readFNumber=$(exiftool -s3 -FNumber "$firstImage")
+    echo -e -n "\e[93m  readFNumber (\e[0m"$readFNumber"\e[93m): \e[0m"
+    read -r checkFNumber
+
+    # Check if an argument was given (-n = string is not null), if true: updata data
+    if [ -n "$checkFNumber" ]
+    then
+        readFNumber="$checkFNumber"
+    fi
+
+    # Read FocalLength from first image of timelapse (-s3 = only return value itself)
+    readFocalLength=$(exiftool -s3 -FocalLength "$firstImage")
+    echo -e -n "\e[93m  FocalLength (\e[0m"$readFocalLength"\e[93m): \e[0m"
+    read -r checkFocalLength
+
+    # Check if an argument was given (-n = string is not null), if true: updata data
+    if [ -n "$checkFocalLength" ]
+    then
+        readFocalLength="$checkFocalLength"
+    fi
+
+    # Read LensMake from first image of timelapse (-s3 = only return value itself)
+    readLensMake=$(exiftool -s3 -LensMake "$firstImage")
+    echo -e -n "\e[93m  LensMake    (\e[0m"$readLensMake"\e[93m): \e[0m"
+    read -r checkLensMake
+
+    # Check if an argument was given (-n = string is not null), if true: updata data
+    if [ -n "$checkLensMake" ]
+    then
+        readLensMake="$checkLensMake"
+    fi
+
+    # Read LensModel from first image of timelapse (-s3 = only return value itself)
+    readLensModel=$(exiftool -s3 -LensModel "$firstImage")
+    echo -e -n "\e[93m  LensModel   (\e[0m"$readLensModel"\e[93m): \e[0m"
+    read -r checkLensModel
+
+    # Check if an argument was given (-n = string is not null), if true: updata data
+    if [ -n "$checkLensModel" ]
+    then
+        readLensModel="$checkLensModel"
+    fi
+
+    # Read MakerNoteFujiFilm data from first image of timelapse
+    readMakerNotes=$(exiftool -MakerNotes:ShutterType -MakerNotes:WhiteBalance -MakerNotes:WhiteBalanceFineTune -MakerNotes:FilmMode -MakerNotes:HighlightTone -MakerNotes:ShadowTone -MakerNotes:Saturation -MakerNotes:ColorChromeEffect -MakerNotes:GrainEffect -MakerNotes:BWAdjustment -MakerNotes:Sharpness -MakerNotes:NoiseReduction -MakerNotes:DevelopmentDynamicRange "$firstImage")
+
+    NL=$'\n' # Allow ${NL} to be used in quoted strings
+
+    if [ "$extraMetadataGiven" = true ] # Boolean check
+    then
+        newUserComment="$extraMetadata${NL}Start date/time of timelapse    : $readCreateDate${NL}$readMakeModel${NL}LensMake                        : $readLensMake${NL}LensModel                       : $readLensModel${NL}FocalLength                     : $readFocalLength${NL}FNumber                         : $readFNumber${NL}$readISOExposureTime${NL}$readMakerNotes${NL}"
+    else
+        newUserComment="Start date/time of timelapse    : $readCreateDate${NL}$readMakeModel${NL}LensMake                        : $readLensMake${NL}LensModel                       : $readLensModel${NL}FocalLength                     : $readFocalLength${NL}FNumber                         : $readFNumber${NL}$readISOExposureTime${NL}$readMakerNotes${NL}"
+    fi
+
+    echo -e "\e[93m\nAdding the following metadata to the videofile:\e[0m"
+    echo "$newUserComment"
+
+    echo -n -e "\e[93mAdding metadata to file... \e[0m"
+
+    # Transfer over Artist and Copyright tags and add new UserComment info (quote marks so spaces can exist in the filepath)
+    exiftool -overwrite_original -tagsFromFile "$firstImage" -Artist -Copyright -UserComment="$newUserComment" "$outputFile"
 }
 
 
@@ -293,18 +454,11 @@ checkAspectRatio () {
 # FUNCTION TO ASK FOR INPUT FILEPATH IF NO ARGUMENT IS GIVEN ON SCRIPT CALL #
 # ========================================================================= #
 
-# Input file information
-filepath="" # Full path
-filename=""
-extension="" 
-
 checkInput () {
-    if [ -z "$1" ] # "$1" = First argument given after the script call
+    if [ -z "$1" ] # "$1" = First argument given after the script call (-z = string is null, has zero length)
     then
         echo -e "\n\e[93mNo path to a file given as the argument of this script!"
-        echo "(use single or double quote marks when there are spaces in the path)"
-        read -p $'Please do so now: \e[0m' filepath
-        echo # Blank line
+        read -r -p $'  Please do so now: \e[0m' filepath
 
         # Check if there are quote marks in the given file path (' or ")
         # Check if first character matches
@@ -332,12 +486,9 @@ checkInput () {
 # FUNCTION TO SET WATERMARK #
 # ========================= #
 
-watermarking=false # Default to no watermark
-watermarkColor=""
-watermarkColorTimelapse=""
-watermarkText="@brecht.ve" # Default watermarking text
-
 checkWatermark () {
+    watermarking=false # Default to no watermark
+
     echo -e "\n\e[93mDo you want to enable the watermark? (text)"
     echo "  Options: 'y' = Yes"
     echo "           'n' = No (default)"
@@ -369,10 +520,10 @@ checkWatermark () {
             echo "           '2' = Black"
             read -p $'Selected option: \e[0m' color
 
-            read -p $'\n\e[93mWhat should the opacity be? (0.00 - 1.00, default = 0.50) \e[0m' opacity
+            read -p $'\n\e[93mWhat should the opacity be? (0.00 - 1.00, default = \e[0m0.50\e[93m) \e[0m' opacity
 
-            # Check if an argument was given, if not: use default value of 0.50
-            if [ -z $opacity ]
+            # Check if an argument was given, if not: use default value of 0.50 (-z = string is null, has zero length)
+            if [ -z "$opacity" ]
             then
                 opacity=0.50
             fi
@@ -417,30 +568,14 @@ checkWatermark () {
 
     if [ "$watermarking" = true ] # Boolean check
     then
+        echo -e "\n\e[93mDo you need a custom watermark text? (default = \e[0m$watermarkText\e[93m)"
+        read -r -p $'  Press enter if not, otherwise enter text: \e[0m' watermarkChangeText
 
-        echo -e "\n\e[93mDo you need a custom watermark text? (default = '@brecht.ve')"
-        echo "  Options: 'y' = Yes"
-        echo "           'n' = No (default)"
-        read -p $'Selected option: \e[0m' watermarkChangeText
-
-        # Check the given argument and set boolean value and other settings accordingly
-        case $watermarkChangeText in
-            # Yes
-            'y'|'Y')
-                read -p $'\n\e[93mWhat should the custom text be? \e[0m' watermarkText
-                ;;
-            
-            # No ('' = enter without character)
-            ''|'n'|'N')
-                echo -e "\e[93m  Using default watermarking text.\e[0m"
-                ;;
-
-            # Unknown option
-            *)
-                echo -e "\e[91mERROR: Unknown option selected. Using default watermarking text.\e[0m"
-                # watermarking=false
-                ;;
-        esac
+        # Check if an argument was given (-n = string is not null), if true: updata data
+        if [ -n "$watermarkChangeText" ]
+        then
+            watermarkText="$watermarkChangeText"
+        fi
     fi
 
     echo # Blank line
@@ -452,18 +587,18 @@ checkWatermark () {
 # =========================== #
 
 makeTimelapse () {
-    read -p $'\n\e[93m  What is the extension of the images? (default = \'JPG\') \e[0m' extension
+    read -p $'\n\e[93m  What is the extension of the images? (default = \e[0mJPG\e[93m) \e[0m' extension
 
-    # Check if an argument was given, if not: use default JPG extension
-    if [ -z $extension ]
+    # Check if an argument was given, if not: use default JPG extension (-z = string is null, has zero length)
+    if [ -z "$extension" ]
     then
         extension="JPG"
     fi
 
-    read -p $'\n\e[93m  What should the framerate be? (default = 30fps) \e[0m' framerate
+    read -p $'\n\e[93m  What should the framerate be? (default = \e[0m30\e[93mfps) \e[0m' framerate
 
-    # Check if an argument was given, if not: use default value of 30 fps
-    if [ -z $framerate ]
+    # Check if an argument was given, if not: use default value of 30 fps (-z = string is null, has zero length)
+    if [ -z "$framerate" ]
     then
         framerate=30
     fi
@@ -489,10 +624,9 @@ makeTimelapse () {
     # Store array ($firstImage$ will give back the first item)
     firstImage=(*.$extension)
 
-    echo "firstImage = $firstImage" # TODO Debugging
-    echo # Blank line
+    echo -e "\e[93mTaking size/metadata-information from first picture (\e[0m$firstImage\e[93m)\e[0m\n"
 
-    # Get image rotation
+    # Get image rotation ("-ping" to not load the entire image)
     orientation=$(identify -ping -format '%[orientation]' "$firstImage") # Quote marks so spaces can exist in the filepath
 
     # Rotate images if necessary
@@ -507,17 +641,30 @@ makeTimelapse () {
 
     # Check input dimensions ("-ping" to not load the entire image)
     width=$(identify -ping -format '%w' "$firstImage") # Quote marks so spaces can exist in the filepath 
-    height=$(identify -ping -format '%h' "$firstImage") # Quote marks so spaces can exist in the filepath 
+    height=$(identify -ping -format '%h' "$firstImage") # Quote marks so spaces can exist in the filepath
+
+    # Variable to see if we need pwd to get the foldername
+    execPWD=true
+
+    # Check if there are "/" marks in the given file path
+    case "$filepath" in 
+        */*)
+            execPWD=false # TODO Uneccesary (for now?) because no path can be given to the timelapse functionality
+            ;;
+    esac
+
+    if [ "$execPWD" = true ] # Boolean check
+    then
+        foldername="$(pwd)"
+    fi
 
     # Get directory (quote marks so spaces can exist in the path)
-    foldername="$(pwd)" # TODO Make it also possible to use filepath folder if a full path was given?
     foldername="${foldername##*/}"
-
+    
     case $videoSize in
         # 4k (16:9) [3840x2160] (no crop and upscaling, add black bars where needed)
         0)
-            # "-n" for not advancing to the next line
-            echo -n -e "\e[93mConverting... \e[0m"
+            echo -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
@@ -526,18 +673,15 @@ makeTimelapse () {
                 echo -e "\e[91mERROR: Currently no watermarking is supported for this mode, its placement depends on the size of the black bars. Goodbye!\e[0m\n"
 
             else
-                ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                    -crf 20 -pix_fmt yuv420p -tune film \
-                    -vf "scale='min(3840,iw)':min'(2160,ih)':force_original_aspect_ratio=decrease,pad=3840:2160:(ow-iw)/2:(oh-ih)/2" \
-                    $foldername-4k-${framerate}fps-nocrop.mp4
-                
-                echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps-nocrop.mp4"
+                outputFile="$foldername-4k-${framerate}fps-nocrop.mp4"
+
+                ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                    -vf "scale='min(3840,iw)':min'(2160,ih)':force_original_aspect_ratio=decrease,pad=3840:2160:(ow-iw)/2:(oh-ih)/2" "$outputFile"
             fi
             ;;
 
         # 1440p (16:9) [2560x1440] (no crop and upscaling, add black bars where needed)
         1)
-             # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
@@ -547,12 +691,10 @@ makeTimelapse () {
                 echo -e "\e[91mERROR: Currently no watermarking is supported for this mode, its placement depends on the size of the black bars. Goodbye!\e[0m\n"
 
             else
-                ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                    -crf 20 -pix_fmt yuv420p -tune film \
-                    -vf "scale='min(2560,iw)':min'(1440,ih)':force_original_aspect_ratio=decrease,pad=2560:1440:(ow-iw)/2:(oh-ih)/2" \
-                    $foldername-1440p-${framerate}fps-nocrop.mp4
-                
-                echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps-nocrop.mp4"
+                outputFile="$foldername-1440p-${framerate}fps-nocrop.mp4"
+
+                ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                    -vf "scale='min(2560,iw)':min'(1440,ih)':force_original_aspect_ratio=decrease,pad=2560:1440:(ow-iw)/2:(oh-ih)/2" "$outputFile"
             fi
             ;;
 
@@ -561,8 +703,14 @@ makeTimelapse () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 3840 2160
 
-            # "-n" for not advancing to the next line
-            echo -n -e "\e[93mConverting... \e[0m"
+            echo -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$foldername-4k-${framerate}fps-wm.mp4"
+            else
+                outputFile="$foldername-4k-${framerate}fps.mp4"
+            fi
 
             case $selectedGravity in
                 # Left
@@ -571,20 +719,11 @@ makeTimelapse () {
 
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:-iw:0,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-4k-${framerate}fps-wm.mp4
-
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:-iw:0,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:-iw:0" \
-                            $foldername-4k-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:-iw:0" "$outputFile"
                     fi
                     ;;
 
@@ -592,20 +731,11 @@ makeTimelapse () {
                 "north")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:0,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-4k-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps-wm.mp4"
-
-                    else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:0" \
-                            $foldername-4k-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:0,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" "$outputFile"
+                    else                        
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:0" "$outputFile"
                     fi
                     ;;
 
@@ -613,20 +743,12 @@ makeTimelapse () {
                 "center")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-4k-${framerate}fps-wm.mp4
-
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps-wm.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" "$outputFile"
 
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160" \
-                            $foldername-4k-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160" "$outputFile"       
                     fi
                     ;;
 
@@ -636,20 +758,11 @@ makeTimelapse () {
 
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:iw:0,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-4k-${framerate}fps-wm.mp4
-
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:iw:0,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:iw:0" \
-                            $foldername-4k-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:iw:0" "$outputFile"
                     fi
                     ;;
 
@@ -657,20 +770,11 @@ makeTimelapse () {
                 "south")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:ih,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-4k-${framerate}fps-wm.mp4
-
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:ih,drawtext=text=\'$watermarkText\':x=20:y=H-th-16:fontfile=\'$fontLocation\':fontsize=40:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:ih" \
-                            $foldername-4k-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-4k-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160:0:ih" "$outputFile"
                     fi
                     ;;
             esac
@@ -681,8 +785,14 @@ makeTimelapse () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 2560 1440
 
-            # "-n" for not advancing to the next line
-            echo -n -e "\e[93mConverting... \e[0m"
+            echo -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$foldername-1440p-${framerate}fps-wm.mp4"
+            else
+                outputFile="$foldername-1440p-${framerate}fps.mp4"
+            fi
 
             case $selectedGravity in
                 # Left
@@ -691,20 +801,11 @@ makeTimelapse () {
 
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:-iw:0,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-1440p-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:-iw:0,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:-iw:0" \
-                            $foldername-1440p-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:-iw:0" "$outputFile"
                     fi
                     ;;
 
@@ -712,20 +813,12 @@ makeTimelapse () {
                 "north")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:0,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-1440p-${framerate}fps-wm.mp4
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:0,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" "$outputFile"
                         
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps-wm.mp4"
-
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:0" \
-                            $foldername-1440p-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:0" "$outputFile"
                     fi
                     ;;
 
@@ -733,20 +826,11 @@ makeTimelapse () {
                 "center")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-1440p-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440" \
-                            $foldername-1440p-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440" "$outputFile"
                     fi
                     ;;
                 
@@ -756,20 +840,11 @@ makeTimelapse () {
 
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:iw:0,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-1440p-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:iw:0,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:iw:0" \
-                            $foldername-1440p-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:iw:0" "$outputFile"
                     fi
                     ;;
 
@@ -777,20 +852,11 @@ makeTimelapse () {
                 "south")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:ih,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-1440p-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:ih,drawtext=text=\'$watermarkText\':x=13:y=H-th-10:fontfile=\'$fontLocation\':fontsize=27:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:ih" \
-                            $foldername-1440p-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-1440p-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440:0:ih" "$outputFile"
                     fi
                     ;;
             esac
@@ -801,28 +867,25 @@ makeTimelapse () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 1080 1080
 
-            # "-n" for not advancing to the next line
-            echo -n -e "\e[93mConverting... \e[0m"
+            echo -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$foldername-insta-1x1-${framerate}fps-wm.mp4"
+            else
+                outputFile="$foldername-insta-1x1-${framerate}fps.mp4"
+            fi
 
             case $selectedGravity in
                 # Left
                 "west") 
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:-iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-1x1-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:-iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:-iw:0" \
-                            $foldername-insta-1x1-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:-iw:0" "$outputFile"
                     fi
                     ;;
                 
@@ -830,20 +893,11 @@ makeTimelapse () {
                 "north")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-1x1-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:0" \
-                            $foldername-insta-1x1-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:0" "$outputFile"
                     fi
                     ;;
 
@@ -851,20 +905,11 @@ makeTimelapse () {
                 "center")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-1x1-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080" \
-                            $foldername-insta-1x1-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080" "$outputFile"
                     fi
                     ;;
                 
@@ -872,20 +917,11 @@ makeTimelapse () {
                 "east")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-1x1-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:iw:0" \
-                            $foldername-insta-1x1-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:iw:0" "$outputFile"
                     fi
                     ;;
 
@@ -893,20 +929,11 @@ makeTimelapse () {
                 "south")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:ih,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-1x1-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:ih,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:ih" \
-                            $foldername-insta-1x1-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-1x1-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080:0:ih" "$outputFile"
                     fi
                     ;;
             esac
@@ -917,28 +944,25 @@ makeTimelapse () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 1080 1350
 
-            # "-n" for not advancing to the next line
-            echo -n -e "\e[93mConverting... \e[0m"
+            echo -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$foldername-insta-4x5-${framerate}fps-wm.mp4"
+            else
+                outputFile="$foldername-insta-4x5-${framerate}fps.mp4"
+            fi
 
             case $selectedGravity in
                 # Left
                 "west")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:-iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-4x5-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:-iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:-iw:0" \
-                            $foldername-insta-4x5-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:-iw:0" "$outputFile"
                     fi
                     ;;
                 
@@ -946,20 +970,11 @@ makeTimelapse () {
                 "north")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-4x5-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:0" \
-                            $foldername-insta-4x5-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:0" "$outputFile"
                     fi
                     ;;
 
@@ -967,20 +982,11 @@ makeTimelapse () {
                 "center")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-4x5-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350" \
-                            $foldername-insta-4x5-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350" "$outputFile"
                     fi
                     ;;
                 
@@ -988,20 +994,11 @@ makeTimelapse () {
                 "east")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-4x5-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:iw:0" \
-                            $foldername-insta-4x5-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:iw:0" "$outputFile"
                     fi
                     ;;
 
@@ -1009,20 +1006,11 @@ makeTimelapse () {
                 "south")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:ih,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-4x5-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:ih,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:ih" \
-                            $foldername-insta-4x5-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-4x5-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:1350:force_original_aspect_ratio=increase,crop=1080:1350:0:ih" "$outputFile"
                     fi
                     ;;
             esac
@@ -1033,8 +1021,14 @@ makeTimelapse () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 1080 566
 
-            # "-n" for not advancing to the next line
-            echo -n -e "\e[93mConverting... \e[0m"
+            echo -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$foldername-insta-5x4-${framerate}fps-wm.mp4"
+            else
+                outputFile="$foldername-insta-5x4-${framerate}fps.mp4"
+            fi
 
             case $selectedGravity in
                 # Left
@@ -1043,20 +1037,11 @@ makeTimelapse () {
 
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:-iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-5x4-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:-iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:-iw:0" \
-                            $foldername-insta-5x4-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:-iw:0" "$outputFile"
                     fi
                     ;;
                 
@@ -1064,20 +1049,11 @@ makeTimelapse () {
                 "north")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-5x4-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:0" \
-                            $foldername-insta-5x4-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:0" "$outputFile"
                     fi
                     ;;
 
@@ -1085,20 +1061,11 @@ makeTimelapse () {
                 "center")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-5x4-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566" \
-                            $foldername-insta-5x4-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566" "$outputFile"
                     fi
                     ;;
                 
@@ -1108,20 +1075,11 @@ makeTimelapse () {
 
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-5x4-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:iw:0,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:iw:0" \
-                            $foldername-insta-5x4-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:iw:0" "$outputFile"
                     fi
                     ;;
 
@@ -1129,20 +1087,11 @@ makeTimelapse () {
                 "south")
                     if [ "$watermarking" = true ] # Boolean check
                     then
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:ih,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" \
-                            $foldername-insta-5x4-${framerate}fps-wm.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps-wm.mp4"
-
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:ih,drawtext=text=\'$watermarkText\':x=9:y=H-th-10:fontfile=\'$fontLocation\':fontsize=30:fontcolor=$watermarkColorTimelapse" "$outputFile"
                     else
-                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 \
-                            -crf 20 -pix_fmt yuv420p -tune film \
-                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:ih" \
-                            $foldername-insta-5x4-${framerate}fps.mp4
-                        
-                        echo -e "\e[93mDone! Created file: \e[0m$foldername-insta-5x4-${framerate}fps.mp4"
+                        ffmpeg -r $framerate -pattern_type glob -i "*.$extension" -vcodec libx264 -crf 20 -pix_fmt yuv420p -tune film \
+                            -vf "scale=1080:566:force_original_aspect_ratio=increase,crop=1080:566:0:ih" "$outputFile"
                     fi
                     ;;
             esac
@@ -1153,6 +1102,15 @@ makeTimelapse () {
             echo -e "\e[91mERROR: Unknown option selected. Goodbye!\e[0m\n"
             ;;
     esac
+
+    if [ "$videoSize" = '' ] || [ "$videoSize" = '0' ] ||  [ "$videoSize" = '1' ] || [ "$videoSize" = '2' ] || [ "$videoSize" = '3' ] \
+                             || [ "$videoSize" = '4' ] || [ "$videoSize" = '5' ] || [ "$videoSize" = '6' ]
+    then
+        # Call metadata logic
+        checkMetadata
+
+        echo -e "\n\e[93mDone! Created file: \e[0m$outputFile\n"
+    fi
 }
 
 
@@ -1166,7 +1124,7 @@ resizePicture () {
 
     echo -e "\e[93mWhat output size do you need?"
     echo "  Options: '0' = 4k    (16:9)  [3840x2160]"
-    echo "           '1' = 1440p (16:9)  [2560x1440]"
+    echo "           '1' = 1440p (16:9)  [2560x1440] (default)"
     echo "           '2' = 1080p (16:9)  [1920x1080]"
     echo # Blank line
     echo "           '3' = Insta (1:1)   [1080x1080]"
@@ -1188,13 +1146,12 @@ resizePicture () {
     read -p $'Selected option: \e[0m' option
     echo # Blank line
 
-    # Get image rotation
+    # Get image rotation ("-ping" to not load the entire image)
     orientation=$(identify -ping -format '%[orientation]' "$filepath") # Quote marks so spaces can exist in the filepath
 
     # Rotate images if necessary
     if [ "$orientation" = "LeftBottom" ] ||  [ "$orientation" = "BottomRight" ] || [ "$orientation" = "RightTop" ]  
     then
-        # "-n" for not advancing to the next line
         echo -n -e "\e[93mRotating image... \e[0m"
 
         exiftran -apib "$filepath" # a = automatic, p = preserve timestamps, i = inplace editing, b = create backup file (add "~" after each original file)
@@ -1212,11 +1169,12 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 3840 2160
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-4k-wm.jpg"
+
                 # "$filepath" Quote marks so spaces can exist in the filepath
                 # Resize flags:
                 #   - ">" = Only shrink larger images
@@ -1226,42 +1184,33 @@ resizePicture () {
                 convert -quality 100 "$filepath" \
                     -resize '3840x2160^' -gravity $selectedGravity -crop '3840x2160+0+0' +repage \
                     -pointsize 40 -font "$fontLocation" -kerning 2.11 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +20+8 "$watermarkText" \
-                    "$filename"-4k-wm.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-4k-wm.jpg\n"
+                    -gravity SouthWest -annotate +20+8 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '3840x2160^' -gravity $selectedGravity -crop '3840x2160+0+0' \
-                    "$filename"-4k.jpg
-                
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-4k.jpg\n"
+                outputFile="$filename-4k.jpg"
+
+                convert -quality 100 "$filepath" -resize '3840x2160^' -gravity $selectedGravity -crop '3840x2160+0+0' "$outputFile"
             fi
             ;;
 
         # 1440p (16:9) [2560x1440] (27pt watermark / kerning 1.51 -annotate +13+5)
-        1)
+        ''|1)
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 2560 1440
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-1440p-wm.jpg"
+
                 convert -quality 100 "$filepath" \
                     -resize '2560x1440^' -gravity $selectedGravity -crop '2560x1440+0+0' +repage \
                     -pointsize 27 -font "$fontLocation" -kerning 1.51 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +13+5 "$watermarkText" \
-                    "$filename"-1440p-wm.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-1440p-wm.jpg\n"
+                    -gravity SouthWest -annotate +13+5 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '2560x1440^' -gravity $selectedGravity -crop '2560x1440+0+0' \
-                    "$filename"-1440p.jpg
-                
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-1440p.jpg\n"
+                outputFile="$filename-1440p.jpg"
+
+                convert -quality 100 "$filepath" -resize '2560x1440^' -gravity $selectedGravity -crop '2560x1440+0+0' "$outputFile"
             fi
             ;;
 
@@ -1270,24 +1219,20 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 1920 1080
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-1080p-wm.jpg"
+
                 convert -quality 100 "$filepath" \
                     -resize '1920x1080^' -gravity $selectedGravity -crop '1920x1080+0+0' +repage \
                     -pointsize 20 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +10+4 "$watermarkText" \
-                    "$filename"-1080p-wm.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-1080p-wm.jpg\n"
+                    -gravity SouthWest -annotate +10+4 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '1920x1080^' -gravity $selectedGravity -crop '1920x1080+0+0' \
-                    "$filename"-1080p.jpg
-                
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-1080p.jpg\n"
+                outputFile="$filename-1080p.jpg"
+
+                convert -quality 100 "$filepath" -resize '1920x1080^' -gravity $selectedGravity -crop '1920x1080+0+0' "$outputFile"
             fi
             ;;
 
@@ -1296,24 +1241,20 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 1080 1080
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-insta-1x1-wm.jpg"
+
                 convert -quality 100 "$filepath" \
                     -resize '1080x1080^' -gravity $selectedGravity -crop '1080x1080+0+0' +repage \
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +9+4 "$watermarkText" \
-                    "$filename"-insta-1x1-wm.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-wm.jpg\n"
+                    -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '1080x1080^' -gravity $selectedGravity -crop '1080x1080+0+0' \
-                    "$filename"-insta-1x1.jpg
-                
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1.jpg\n"
+                outputFile="$filename-insta-1x1-wm.jpg"
+
+                convert -quality 100 "$filepath" -resize '1080x1080^' -gravity $selectedGravity -crop '1080x1080+0+0' "$outputFile"
             fi
             ;;
 
@@ -1325,8 +1266,14 @@ resizePicture () {
             heightRatio=$(echo "scale=2 ; $height / 1080" | bc)
             heightRatio=$(echo "$heightRatio * 100 / 1" | bc)
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$filename-insta-1x1-nocrop-wm.jpg"
+            else
+                outputFile="$filename-insta-1x1-nocrop.jpg"
+            fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
             if (( widthRatio < heightRatio )); then
@@ -1337,16 +1284,9 @@ resizePicture () {
                         -resize x1080 \
                         -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +9+4 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1080' "$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize x1080 -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize x1080 -gravity center -background white -extent '1080x1080' "$outputFile"
                 fi
 
             # Add white border to the top and bottom
@@ -1358,16 +1298,9 @@ resizePicture () {
                         -resize 1080 \
                         -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +9+4 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1080'"$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize 1080 -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize 1080 -gravity center -background white -extent '1080x1080' "$outputFile"
                 fi
             fi
             ;;
@@ -1380,8 +1313,14 @@ resizePicture () {
             heightRatio=$(echo "scale=2 ; $height / 1080" | bc)
             heightRatio=$(echo "$heightRatio * 100 / 1" | bc)
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$filename-insta-1x1-nocrop-wm.jpg"
+            else
+                outputFile="$filename-insta-1x1-nocrop.jpg"
+            fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
             if (( widthRatio < heightRatio )); then
@@ -1392,16 +1331,9 @@ resizePicture () {
                         -resize x1080 \
                         -pointsize 25 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +25+32 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1080' "$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize x1080 -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize x1080 -gravity center -background white -extent '1080x1080' "$outputFile"
                 fi
 
             # Add white border to the top and bottom
@@ -1413,16 +1345,9 @@ resizePicture () {
                         -resize 1080 \
                         -pointsize 25 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +38+20 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1080' "$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize 1080 -gravity center -background white -extent '1080x1080' \
-                        "$filename"-insta-1x1-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize 1080 -gravity center -background white -extent '1080x1080' "$outputFile"
                 fi
             fi
             ;;
@@ -1432,11 +1357,12 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 2160 1080
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-insta-1x1-wm-wide-0/1.jpg"
+
                 # First resize to big picture, then divide in two, then watermark 
                 # "@" = Equally divide the image into the number of tiles generated
                 # "+gravity" = reset gravity option
@@ -1444,17 +1370,12 @@ resizePicture () {
                     -resize '2160x1080^' -gravity $selectedGravity -crop '2160x1080+0+0' +repage \
                     +gravity -crop 2x1@ +repage \
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +9+4 "$watermarkText" \
-                    "$filename"-insta-1x1-wm-wide.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-wm-wide-0/1.jpg\n"
+                    -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '2160x1080^' -gravity $selectedGravity -crop '2160x1080+0+0' +repage \
-                    +gravity -crop 2x1@ +repage \
-                    "$filename"-insta-1x1-wide.jpg
+                outputFile="$filename-insta-1x1-wide-0/1.jpg"
 
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-1x1-wide-0/1.jpg\n"
+                convert -quality 100 "$filepath" -resize '2160x1080^' -gravity $selectedGravity \
+                    -crop '2160x1080+0+0' +repage +gravity -crop 2x1@ +repage "$outputFile"
             fi
             ;;
 
@@ -1463,24 +1384,20 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 1080 1350
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-insta-4x5-wm.jpg"
+
                 convert -quality 100 "$filepath" \
                     -resize '1080x1350^' -gravity $selectedGravity -crop '1080x1350+0+0' +repage \
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +9+4 "$watermarkText" \
-                    "$filename"-insta-4x5-wm.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-wm.jpg\n"
+                    -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '1080x1350^' -gravity $selectedGravity -crop '1080x1350+0+0' \
-                    "$filename"-insta-4x5.jpg
-                
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5.jpg\n"
+                outputFile="$filename-insta-4x5.jpg"
+
+                convert -quality 100 "$filepath" -resize '1080x1350^' -gravity $selectedGravity -crop '1080x1350+0+0' "$outputFile"
             fi
             ;;
 
@@ -1492,8 +1409,14 @@ resizePicture () {
             heightRatio=$(echo "scale=2 ; $height / 1350" | bc)
             heightRatio=$(echo "$heightRatio * 100 / 1" | bc)
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$filename-insta-4x5-nocrop-wm.jpg"
+            else
+                outputFile="$filename-insta-4x5-nocrop.jpg"
+            fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
             if (( widthRatio < heightRatio )); then
@@ -1504,16 +1427,9 @@ resizePicture () {
                         -resize x1350 \
                         -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +9+4 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1350' "$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize x1350 -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize x1350 -gravity center -background white -extent '1080x1350' "$outputFile"
                 fi
 
             # Add white border to the top and bottom
@@ -1525,16 +1441,9 @@ resizePicture () {
                         -resize 1080 \
                         -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +9+4 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1350' "$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize 1080 -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize 1080 -gravity center -background white -extent '1080x1350' "$outputFile"
                 fi
             fi
             ;;
@@ -1547,8 +1456,14 @@ resizePicture () {
             heightRatio=$(echo "scale=2 ; $height / 1350" | bc)
             heightRatio=$(echo "$heightRatio * 100 / 1" | bc)
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
+
+            if [ "$watermarking" = true ] # Boolean check
+            then
+                outputFile="$filename-insta-4x5-nocrop-wm.jpg"
+            else
+                outputFile="$filename-insta-4x5-nocrop.jpg"
+            fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
             if (( widthRatio < heightRatio )); then
@@ -1559,16 +1474,9 @@ resizePicture () {
                         -resize x1350 \
                         -pointsize 25 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +30+40 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1350' "$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize x1350 -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize x1350 -gravity center -background white -extent '1080x1350' "$outputFile"
                 fi
 
             # Add white border to the top and bottom
@@ -1580,16 +1488,9 @@ resizePicture () {
                         -resize 1080 \
                         -pointsize 25 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                         -gravity SouthWest -annotate +38+20 "$watermarkText" +repage \
-                        -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop-wm.jpg
-
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop-wm.jpg\n"
+                        -gravity center -background white -extent '1080x1350' "$outputFile"
                 else
-                    convert -quality 100 "$filepath" \
-                        -resize 1080 -gravity center -background white -extent '1080x1350' \
-                        "$filename"-insta-4x5-nocrop.jpg
-                    
-                    echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-nocrop.jpg\n"
+                    convert -quality 100 "$filepath" -resize 1080 -gravity center -background white -extent '1080x1350' "$outputFile"
                 fi
             fi
             ;;
@@ -1599,11 +1500,12 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 2160 1350
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-insta-4x5-wm-wide-0/1.jpg"
+
                 # First resize to big picture, then divide in two, then watermark 
                 # "@" = Equally divide the image into the number of tiles generated
                 # "+gravity" = reset gravity option
@@ -1611,17 +1513,12 @@ resizePicture () {
                     -resize '2160x1350^' -gravity $selectedGravity -crop '2160x1350+0+0' +repage \
                     +gravity -crop 2x1@ +repage \
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +9+4 "$watermarkText" \
-                    "$filename"-insta-4x5-wm-wide.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-wm-wide-0/1.jpg\n"
+                    -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '2160x1350^' -gravity $selectedGravity -crop '2160x1350+0+0' +repage \
-                    +gravity -crop 2x1@ +repage \
-                    "$filename"-insta-4x5-wide.jpg
+                outputFile="$filename-insta-4x5-wide-0/1.jpg"
 
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-4x5-wide-0/1.jpg\n"
+                convert -quality 100 "$filepath" -resize '2160x1350^' -gravity $selectedGravity \
+                    -crop '2160x1350+0+0' +repage +gravity -crop 2x1@ +repage "$outputFile"
             fi
             ;;
 
@@ -1630,24 +1527,20 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 1080 566
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting... \e[0m"
 
             if [ "$watermarking" = true ] # Boolean check
             then
+                outputFile="$filename-insta-5x4-wm.jpg"
+
                 convert -quality 100 "$filepath" \
                     -resize '1080x566^' -gravity $selectedGravity -crop '1080x566+0+0' +repage \
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
-                    -gravity SouthWest -annotate +9+4 "$watermarkText" \
-                    "$filename"-insta-5x4-wm.jpg
-
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-5x4-wm.jpg\n"
+                    -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                convert -quality 100 "$filepath" \
-                    -resize '1080x566^' -gravity $selectedGravity -crop '1080x566+0+0' \
-                    "$filename"-insta-5x4.jpg
-                
-                echo -e "\e[93mDone! Converted file: \e[0m$filename-insta-5x4.jpg\n"
+                outputFile="$filename-insta-5x4-wm.jpg"
+
+                convert -quality 100 "$filepath" -resize '1080x566^' -gravity $selectedGravity -crop '1080x566+0+0' "$outputFile"
             fi
             ;;
 
@@ -1656,14 +1549,11 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 3 2
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting ... \e[0m"
 
-            convert -quality 100 "$filepath" \
-                -gravity $selectedGravity -crop 3:2 \
-                "$filename"-3x2.jpg
-            
-            echo -e "\e[93mDone! Converted file: \e[0m$filename-3x2.jpg\n"
+            outputFile="$filename-3x2.jpg"
+
+            convert -quality 100 "$filepath" -gravity $selectedGravity -crop 3:2 "$outputFile"
             ;;
 
         # 35mm (2:3) [NA] (no watermark)
@@ -1671,14 +1561,11 @@ resizePicture () {
             # Check if the aspect ratio's match and ask for a "gravity" option if not the case
             checkAspectRatio $width $height 2 3
 
-            # "-n" for not advancing to the next line
             echo -n -e "\e[93mConverting ... \e[0m"
 
-            convert -quality 100 "$filepath" \
-                -gravity $selectedGravity -crop 2:3 \
-                "$filename"-2x3.jpg
-            
-            echo -e "\e[93mDone! Converted file: \e[0m$filename-2x3.jpg\n"
+            outputFile="$filename-2x3.jpg"
+
+            convert -quality 100 "$filepath" -gravity $selectedGravity -crop 2:3 "$outputFile"
             ;;
 
         # Unknown option
@@ -1686,6 +1573,13 @@ resizePicture () {
             echo -e "\e[91mERROR: Unknown option selected. Goodbye!\e[0m\n"
             ;;
     esac
+
+    if [ "$option" = '' ] || [ "$option" = '0'  ] || [ "$option" = '1'  ] || [ "$option" = '2'  ] || [ "$option" = '3'  ] || [ "$option" = '4' ] \
+                          || [ "$option" = '5'  ] || [ "$option" = '6'  ] || [ "$option" = '7'  ] || [ "$option" = '8'  ] || [ "$option" = '9' ] \
+                          || [ "$option" = '10' ] || [ "$option" = '11' ] || [ "$option" = '12' ] || [ "$option" = '13' ]
+    then
+        echo -e "\e[93mDone! Created file: \e[0m$outputFile\n"
+    fi
 }
 
 
@@ -1694,4 +1588,4 @@ resizePicture () {
 # ================== #
 
 # Explicitly passing "$@" to main is required to make the command line arguments of the script visible in the function
-main "$@" 
+main "$@"

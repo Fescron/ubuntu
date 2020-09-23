@@ -35,10 +35,11 @@ watermarkText="@brecht.ve"
 #  - Add kerning functionality to watermarking text of timelapses (4k = 2.11 // 1440p = 1.51 // insta = 1.01)
 #  - Add option to change Artist and Copyright fields
 #  - Add option to remove metadata (https://superuser.com/questions/450838/exiftool-delete-exif-data-but-preserve-some-specific-tags/450853#450853)
-#  - Add option to give a path as an argument to the script and make a timelapse there
+#  - Add option to give a path as an argument/during the execution of the script and move images (0-1), compress pictures (5) and make a timelapse (6)
+#      => "Do you want to specify an external path (press enter to execute script here)"
+#  - Make sure $foldername can also work if a full path has been given and the script isn't executed in the main directory
 #  - Add watermarking functionality to nocrop timelapse options
 #  - Add -h and --help script argument
-#  - Make sure $foldername can also work if a full path has been given and the script isn't executed in the main directory
 #  - Add watermarking option with PNG's
 #  - Add watermarking for 35mm?
 #  - Bulk selection? ("-d " argument, DIRECTORY)
@@ -88,10 +89,7 @@ main () {
             read -p $'\n\e[93m  What is the extension of the images? (default = \e[0mJPG\e[93m) \e[0m' extension
 
             # Check if an argument was given, if not: use default JPG extension (-z = string is null, has zero length)
-            if [ -z "$extension" ]
-            then
-                extension="JPG"
-            fi
+            if [ -z "$extension" ]; then extension="JPG"; fi
 
             echo -e "\n\e[93mMoving images... \e[0m"
 
@@ -161,18 +159,12 @@ main () {
                     read -p $'\n\e[93m  What is the extension of the images? (default = \e[0mJPG\e[93m) \e[0m' extension
 
                     # Check if an argument was given, if not: use default JPG extension (-z = string is null, has zero length)
-                    if [ -z "$extension" ]
-                    then
-                        extension="JPG"
-                    fi
+                    if [ -z "$extension" ]; then extension="JPG"; fi
                     
                     read -p $'\n\e[93m  What should the reduction factor be? (0 - 100 (%), default = \e[0m85\e[93m%) \e[0m' reduction
  
                     # Check if an argument was given, if not: use default value of 85 (-z = string is null, has zero length)
-                    if [ -z "$reduction" ]
-                    then
-                        reduction=85
-                    fi
+                    if [ -z "$reduction" ]; then reduction=85; fi
 
                     echo -n -e "\n\e[93mConverting... \e[0m"
 
@@ -189,10 +181,7 @@ main () {
                     read -p $'\n\e[93m  What should the reduction factor be? (0 - 100 (%), default = \e[0m85\e[93m%) \e[0m' reduction
 
                     # Check if an argument was given, if not: use default value of 85 (-z = string is null, has zero length)
-                    if [ -z "$reduction" ]
-                    then
-                        reduction=85
-                    fi
+                    if [ -z "$reduction" ]; then reduction=85; fi
 
                     echo -n -e "\n\e[93mConverting... \e[0m"
 
@@ -252,10 +241,7 @@ checkMetadata () {
     read -r -p $'  Press enter if not, otherwise enter text: \e[0m' extraMetadata
 
     # Check if an argument was given (-n = string is not null)
-    if [ -n "$extraMetadata" ]
-    then
-        extraMetadataGiven=true
-    fi
+    if [ -n "$extraMetadata" ]; then extraMetadataGiven=true; fi
 
     # Read CreateDate from first image of timelapse (-s3 = only return value itself)
     readCreateDate=$(exiftool -s3 -CreateDate "$firstImage")
@@ -275,10 +261,7 @@ checkMetadata () {
     read -r checkFNumber
 
     # Check if an argument was given (-n = string is not null), if true: updata data
-    if [ -n "$checkFNumber" ]
-    then
-        readFNumber="$checkFNumber"
-    fi
+    if [ -n "$checkFNumber" ]; then readFNumber="$checkFNumber"; fi
 
     # Read FocalLength from first image of timelapse (-s3 = only return value itself)
     readFocalLength=$(exiftool -s3 -FocalLength "$firstImage")
@@ -286,10 +269,7 @@ checkMetadata () {
     read -r checkFocalLength
 
     # Check if an argument was given (-n = string is not null), if true: updata data
-    if [ -n "$checkFocalLength" ]
-    then
-        readFocalLength="$checkFocalLength"
-    fi
+    if [ -n "$checkFocalLength" ]; then readFocalLength="$checkFocalLength"; fi
 
     # Read LensMake from first image of timelapse (-s3 = only return value itself)
     readLensMake=$(exiftool -s3 -LensMake "$firstImage")
@@ -297,10 +277,7 @@ checkMetadata () {
     read -r checkLensMake
 
     # Check if an argument was given (-n = string is not null), if true: updata data
-    if [ -n "$checkLensMake" ]
-    then
-        readLensMake="$checkLensMake"
-    fi
+    if [ -n "$checkLensMake" ]; then readLensMake="$checkLensMake"; fi
 
     # Read LensModel from first image of timelapse (-s3 = only return value itself)
     readLensModel=$(exiftool -s3 -LensModel "$firstImage")
@@ -308,10 +285,7 @@ checkMetadata () {
     read -r checkLensModel
 
     # Check if an argument was given (-n = string is not null), if true: updata data
-    if [ -n "$checkLensModel" ]
-    then
-        readLensModel="$checkLensModel"
-    fi
+    if [ -n "$checkLensModel" ]; then readLensModel="$checkLensModel"; fi
 
     # Read MakerNoteFujiFilm data from first image of timelapse
     readMakerNotes=$(exiftool -MakerNotes:ShutterType -MakerNotes:WhiteBalance -MakerNotes:WhiteBalanceFineTune -MakerNotes:FilmMode -MakerNotes:HighlightTone -MakerNotes:ShadowTone -MakerNotes:Saturation -MakerNotes:ColorChromeEffect -MakerNotes:GrainEffect -MakerNotes:BWAdjustment -MakerNotes:Sharpness -MakerNotes:NoiseReduction -MakerNotes:DevelopmentDynamicRange "$firstImage")
@@ -375,10 +349,12 @@ checkAspectRatio () {
 
     # Ask for a "gravity" used to crop the picture if the ratio's don't match
     # Double brackets to activate the aritmetic context
-    if (( widthRatio != heightRatio )); then
+    if (( widthRatio != heightRatio ))
+    then
 
         # We can crop from the top, center or bottom
-        if (( widthRatio < heightRatio )); then
+        if (( widthRatio < heightRatio ))
+        then
             echo -e "\e[93mIn- and output aspect-ratio are not the same!"
             echo "Please select a direction to crop the picture."
             echo "  Options: 't' = Top"
@@ -523,10 +499,7 @@ checkWatermark () {
             read -p $'\n\e[93mWhat should the opacity be? (0.00 - 1.00, default = \e[0m0.50\e[93m) \e[0m' opacity
 
             # Check if an argument was given, if not: use default value of 0.50 (-z = string is null, has zero length)
-            if [ -z "$opacity" ]
-            then
-                opacity=0.50
-            fi
+            if [ -z "$opacity" ]; then opacity=0.50; fi
 
             case $color in
                 # Dark grey ('' = enter without character)
@@ -572,10 +545,7 @@ checkWatermark () {
         read -r -p $'  Press enter if not, otherwise enter text: \e[0m' watermarkChangeText
 
         # Check if an argument was given (-n = string is not null), if true: updata data
-        if [ -n "$watermarkChangeText" ]
-        then
-            watermarkText="$watermarkChangeText"
-        fi
+        if [ -n "$watermarkChangeText" ]; then watermarkText="$watermarkChangeText"; fi
     fi
 
     echo # Blank line
@@ -590,18 +560,12 @@ makeTimelapse () {
     read -p $'\n\e[93m  What is the extension of the images? (default = \e[0mJPG\e[93m) \e[0m' extension
 
     # Check if an argument was given, if not: use default JPG extension (-z = string is null, has zero length)
-    if [ -z "$extension" ]
-    then
-        extension="JPG"
-    fi
+    if [ -z "$extension" ]; then extension="JPG"; fi
 
     read -p $'\n\e[93m  What should the framerate be? (default = \e[0m30\e[93mfps) \e[0m' framerate
 
     # Check if an argument was given, if not: use default value of 30 fps (-z = string is null, has zero length)
-    if [ -z "$framerate" ]
-    then
-        framerate=30
-    fi
+    if [ -z "$framerate" ]; then framerate=30; fi
 
     # Call watermark logic
     checkWatermark
@@ -621,7 +585,7 @@ makeTimelapse () {
     read -p $'Selected option: \e[0m' videoSize
     echo # Blank line
 
-    # Store array ($firstImage$ will give back the first item)
+    # Store array ($firstImage will give back the first item)
     firstImage=(*.$extension)
 
     echo -e "\e[93mTaking size/metadata-information from first picture (\e[0m$firstImage\e[93m)\e[0m\n"
@@ -653,10 +617,7 @@ makeTimelapse () {
             ;;
     esac
 
-    if [ "$execPWD" = true ] # Boolean check
-    then
-        foldername="$(pwd)"
-    fi
+    if [ "$execPWD" = true ]; then foldername="$(pwd)"; fi
 
     # Get directory (quote marks so spaces can exist in the path)
     foldername="${foldername##*/}"
@@ -1252,7 +1213,7 @@ resizePicture () {
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                     -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                outputFile="$filename-insta-1x1-wm.jpg"
+                outputFile="$filename-insta-1x1.jpg"
 
                 convert -quality 100 "$filepath" -resize '1080x1080^' -gravity $selectedGravity -crop '1080x1080+0+0' "$outputFile"
             fi
@@ -1276,7 +1237,8 @@ resizePicture () {
             fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
-            if (( widthRatio < heightRatio )); then
+            if (( widthRatio < heightRatio ))
+            then
                 if [ "$watermarking" = true ] # Boolean check
                 then
                     # First resize to picture with HEIGHT of 1080 (x1080), then watermark, then add borders
@@ -1323,7 +1285,8 @@ resizePicture () {
             fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
-            if (( widthRatio < heightRatio )); then
+            if (( widthRatio < heightRatio ))
+            then
                 if [ "$watermarking" = true ] # Boolean check
                 then
                     # First resize to picture with HEIGHT of 1080 (x1080), then watermark, then add borders
@@ -1361,7 +1324,7 @@ resizePicture () {
 
             if [ "$watermarking" = true ] # Boolean check
             then
-                outputFile="$filename-insta-1x1-wm-wide-0/1.jpg"
+                outputFile="$filename-insta-1x1-wide-wm.jpg"
 
                 # First resize to big picture, then divide in two, then watermark 
                 # "@" = Equally divide the image into the number of tiles generated
@@ -1372,7 +1335,7 @@ resizePicture () {
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                     -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                outputFile="$filename-insta-1x1-wide-0/1.jpg"
+                outputFile="$filename-insta-1x1-wide.jpg"
 
                 convert -quality 100 "$filepath" -resize '2160x1080^' -gravity $selectedGravity \
                     -crop '2160x1080+0+0' +repage +gravity -crop 2x1@ +repage "$outputFile"
@@ -1419,7 +1382,8 @@ resizePicture () {
             fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
-            if (( widthRatio < heightRatio )); then
+            if (( widthRatio < heightRatio ))
+            then
                 if [ "$watermarking" = true ] # Boolean check
                 then
                     # First resize to picture with HEIGHT of 1350 (x1350), then watermark, then add borders
@@ -1466,7 +1430,8 @@ resizePicture () {
             fi
 
             # Add white borders to the left and right (double brackets to activate the aritmetic context)
-            if (( widthRatio < heightRatio )); then
+            if (( widthRatio < heightRatio ))
+            then
                 if [ "$watermarking" = true ] # Boolean check
                 then
                     # First resize to picture with HEIGHT of 1350 (x1350), then watermark, then add borders
@@ -1504,7 +1469,7 @@ resizePicture () {
 
             if [ "$watermarking" = true ] # Boolean check
             then
-                outputFile="$filename-insta-4x5-wm-wide-0/1.jpg"
+                outputFile="$filename-insta-4x5-wide-wm.jpg"
 
                 # First resize to big picture, then divide in two, then watermark 
                 # "@" = Equally divide the image into the number of tiles generated
@@ -1515,7 +1480,7 @@ resizePicture () {
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                     -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                outputFile="$filename-insta-4x5-wide-0/1.jpg"
+                outputFile="$filename-insta-4x5-wide.jpg"
 
                 convert -quality 100 "$filepath" -resize '2160x1350^' -gravity $selectedGravity \
                     -crop '2160x1350+0+0' +repage +gravity -crop 2x1@ +repage "$outputFile"
@@ -1538,7 +1503,7 @@ resizePicture () {
                     -pointsize 30 -font "$fontLocation" -kerning 1.01 -fill $watermarkColor \
                     -gravity SouthWest -annotate +9+4 "$watermarkText" "$outputFile"
             else
-                outputFile="$filename-insta-5x4-wm.jpg"
+                outputFile="$filename-insta-5x4.jpg"
 
                 convert -quality 100 "$filepath" -resize '1080x566^' -gravity $selectedGravity -crop '1080x566+0+0' "$outputFile"
             fi

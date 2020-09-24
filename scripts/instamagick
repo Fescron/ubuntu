@@ -12,12 +12,12 @@
 #   Call this script and point it to the PATH of the picture         #
 #   with the FIRST ARGUMENT after the script call.                   #
 #                                                                    #
-# Brecht Van Eeckhoudt - 23/09/2020 (development started 22/08/2019) #
+# Brecht Van Eeckhoudt - 24/09/2020 (development started 22/08/2019) #
 # Written on Ubuntu 19.04                                            #
 # ================================================================== #
 
 # Version of this script (date)
-version="23/09/2020"
+version="24/09/2020"
 
 # Location of the font to use for watermarking
 fontLocation="/home/brecht/.fonts/BebasNeue Book.otf"
@@ -27,13 +27,14 @@ watermarkText="@brecht.ve"
 
 
 
+# TODO Add ability to change Artist and Copyright fields
+
 # TODO Future improvements:
 #  - Check left/right (/bottom) crop functionality for timelapses
 #      => 21/09/2020: Changed "ow"/"oh" to "iw"/"ih" for left/right/bottom crop functionality for options 2-6 because "ih" gave problems for 4k bottom timelapse cropping...
 #                     Probably needs more testing to be sure, see "Not tested yet!" echo messages!
 #  - Simplify resizePicture (and makeTimelapse) code: Use (global, at the top of the file) variables for arguments that always are the same
 #  - Add kerning functionality to watermarking text of timelapses (4k = 2.11 // 1440p = 1.51 // insta = 1.01)
-#  - Add option to change Artist and Copyright fields
 #  - Add option to remove metadata (https://superuser.com/questions/450838/exiftool-delete-exif-data-but-preserve-some-specific-tags/450853#450853)
 #  - Add option to give a path as an argument/during the execution of the script and move images (0-1), compress pictures (5) and make a timelapse (6)
 #      => "Do you want to specify an external path (press enter to execute script here)"
@@ -74,11 +75,12 @@ main () {
     echo -e "\e[93mWhat do you want to do?"
     echo "  Options: '0' = Move images in new directories based on their 'CreateDate'"
     echo "           '1' = Move RAF files into a (new) RAF directory"
-    echo "           '2' = Read metadata of a file (ImageCount, ...)"
-    echo "           '3' = Resize picture and optionally add a watermark (text)"
-    echo "           '4' = Compress picture(s)"
-    echo "           '5' = Compress PDF document"
-    echo "           '6' = Create a timelapse"
+    echo "           '2' = Read all metadata of a file (ImageCount, ...)"
+    echo "           '3' = Read important metadata of an image (short)"
+    echo "           '4' = Resize picture and optionally add a watermark (text)"
+    echo "           '5' = Compress picture(s)"
+    echo "           '6' = Compress PDF document"
+    echo "           '7' = Create a timelapse"
     read -p $'Selected option: \e[0m' selection
 
     case $selection in
@@ -113,7 +115,7 @@ main () {
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
-            echo -e "\e[93m\nRead metadata:\e[0m"
+            echo -e "\n\e[93mRead metadata:\e[0m"
 
             # -g = Show the group names (g1 shows the family 1 group name (ie. the location) of each tag)
             # -a = Allow duplicate tags to be extracted
@@ -135,9 +137,35 @@ main () {
 
             echo # Blank line
             ;;
+        
+        # Read important metadata of an image
+        '3')
+            # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
+            checkInput "$@"
+
+            # Read MakerNoteFujiFilm
+            readMakerNotes=$(exiftool -MakerNotes:ImageCount -MakerNotes:Quality -MakerNotes:ImageGeneration -MakerNotes:ShutterType -MakerNotes:WhiteBalance -MakerNotes:WhiteBalanceFineTune -MakerNotes:FilmMode -MakerNotes:HighlightTone -MakerNotes:ShadowTone -MakerNotes:Saturation -MakerNotes:ColorChromeEffect -MakerNotes:GrainEffect -MakerNotes:BWAdjustment -MakerNotes:Sharpness -MakerNotes:NoiseReduction -MakerNotes:DevelopmentDynamicRange "$filepath")
+
+            # Read CreateDate, Artist, Copyright, Software and FocalLength
+            readInfo=$(exiftool -CreateDate -Artist -Copyright -Software -FocalLength "$filepath")
+
+            # Read metadata (-s3 = only display value)
+            readModel=$(exiftool -s3 -Model "$filepath")
+            readLensModel=$(exiftool -s3 -LensModel "$filepath")
+            readISO=$(exiftool -s3 -ISO "$filepath")
+            readExposureTime=$(exiftool -s3 -ExposureTime "$filepath")
+            readFNumber=$(exiftool -s3 -FNumber "$filepath")
+
+            echo -e "\n\e[93mMakerNotes:\e[0m"
+            echo    "$readMakerNotes"
+            echo -e "\n\e[93mBasic metadata:\e[0m"
+            echo -e "$readInfo\n"
+            echo    "$readModel with $readLensModel"
+            echo -e "ISO $readISO, ${readExposureTime}s, F$readFNumber\n"
+            ;;
 
         # Resizing pictures (with/without watermarking)
-        '3')
+        '4')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
@@ -146,7 +174,7 @@ main () {
             ;;
 
         # Compressing pictures
-        '4')
+        '5')
             echo -e "\n\e[93mDo you want to compress all of the pictures in the directory?"
             echo "  Options: 'y' = Yes"
             echo "           'n' = No (default)"
@@ -198,7 +226,7 @@ main () {
             ;;
 
         # Compress PDF document
-        '5')
+        '6')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
@@ -211,7 +239,7 @@ main () {
             ;;
 
         # Timelapse creation
-        '6')
+        '7')
             # Call logic
             makeTimelapse
             ;;
@@ -288,7 +316,7 @@ checkMetadata () {
     if [ -n "$checkLensModel" ]; then readLensModel="$checkLensModel"; fi
 
     # Read MakerNoteFujiFilm data from first image of timelapse
-    readMakerNotes=$(exiftool -MakerNotes:ShutterType -MakerNotes:WhiteBalance -MakerNotes:WhiteBalanceFineTune -MakerNotes:FilmMode -MakerNotes:HighlightTone -MakerNotes:ShadowTone -MakerNotes:Saturation -MakerNotes:ColorChromeEffect -MakerNotes:GrainEffect -MakerNotes:BWAdjustment -MakerNotes:Sharpness -MakerNotes:NoiseReduction -MakerNotes:DevelopmentDynamicRange "$firstImage")
+    readMakerNotes=$(exiftool -MakerNotes:Quality -MakerNotes:ShutterType -MakerNotes:WhiteBalance -MakerNotes:WhiteBalanceFineTune -MakerNotes:FilmMode -MakerNotes:HighlightTone -MakerNotes:ShadowTone -MakerNotes:Saturation -MakerNotes:ColorChromeEffect -MakerNotes:GrainEffect -MakerNotes:BWAdjustment -MakerNotes:Sharpness -MakerNotes:NoiseReduction -MakerNotes:DevelopmentDynamicRange "$firstImage")
 
     NL=$'\n' # Allow ${NL} to be used in quoted strings
 
@@ -299,7 +327,7 @@ checkMetadata () {
         newUserComment="Start date/time of timelapse    : $readCreateDate${NL}$readMakeModel${NL}LensMake                        : $readLensMake${NL}LensModel                       : $readLensModel${NL}FocalLength                     : $readFocalLength${NL}FNumber                         : $readFNumber${NL}$readISOExposureTime${NL}$readMakerNotes${NL}"
     fi
 
-    echo -e "\e[93m\nAdding the following metadata to the videofile:\e[0m"
+    echo -e "\n\e[93mAdding the following metadata to the videofile:\e[0m"
     echo "$newUserComment"
 
     echo -n -e "\e[93mAdding metadata to file... \e[0m"

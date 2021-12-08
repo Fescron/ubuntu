@@ -12,12 +12,12 @@
 #   Call this script and point it to the PATH of the picture         #
 #   with the FIRST ARGUMENT after the script call.                   #
 #                                                                    #
-# Brecht Van Eeckhoudt - 24/09/2020 (development started 22/08/2019) #
+# Brecht Van Eeckhoudt - 18/11/2021 (development started 22/08/2019) #
 # Written on Ubuntu 19.04                                            #
 # ================================================================== #
 
 # Version of this script (date)
-version="24/09/2020"
+version="18/11/2021"
 
 # Location of the font to use for watermarking
 fontLocation="/home/brecht/.fonts/BebasNeue Book.otf"
@@ -27,7 +27,11 @@ watermarkText="@brecht.ve"
 
 
 
+# TODO Add ability to compress videos (ffmpeg -i input.mp4 -vcodec libx265 -crf 28 output.mp4 # Increase CRF for more compression)
+# TODO Add ability to compress images a certain percentage (mogrify -path smaller -format JPG -resize 40% *.JPG) (Convert input.jpg -resize 40% output.jpg)
+# TODO Add ability to make image collages
 # TODO Add ability to change Artist and Copyright fields
+# TODO Add ability to store total amount of pictures/runtime of timelapse
 
 # TODO Future improvements:
 #  - Check left/right (/bottom) crop functionality for timelapses
@@ -41,10 +45,11 @@ watermarkText="@brecht.ve"
 #  - Make sure $foldername can also work if a full path has been given and the script isn't executed in the main directory
 #  - Add watermarking functionality to nocrop timelapse options
 #  - Add -h and --help script argument
-#  - Add watermarking option with PNG's
+#  - Add (batch) watermarking (+ resizing) option with PNG's as input-files (left, right, both sides a watermark)
 #  - Add watermarking for 35mm?
 #  - Bulk selection? ("-d " argument, DIRECTORY)
 #  - Add small white borders to left and right of instagram pictures? (-bordercolor white -border 5x0)
+#  - Add compression-options as extra metadata comment
 
 
 
@@ -73,14 +78,14 @@ main () {
     echo -e "\e[93m<<< Press \e[1mENTER\e[0m\e[93m to choose default value and \e[1mCTRL + C\e[0m\e[93m to quit >>>\n"
     
     echo -e "\e[93mWhat do you want to do?"
-    echo "  Options: '0' = Move images in new directories based on their 'CreateDate'"
-    echo "           '1' = Move RAF files into a (new) RAF directory"
-    echo "           '2' = Read all metadata of a file (ImageCount, ...)"
-    echo "           '3' = Read important metadata of an image (short)"
-    echo "           '4' = Resize picture and optionally add a watermark (text)"
-    echo "           '5' = Compress picture(s)"
-    echo "           '6' = Compress PDF document"
-    echo "           '7' = Create a timelapse"
+    echo    "  Options: '0' = Move images in new directories based on their 'CreateDate'"
+    echo    "           '1' = Move RAF files into a (new) RAF directory"
+    echo -e "           'a' = Read \e[0ma\e[93mll metadata of a file (ImageCount, ...)"
+    echo -e "           'i' = Read \e[0mi\e[93mmportant metadata of an image (short)"
+    echo -e "           'r' = \e[0mr\e[93mesize picture and optionally add a watermark (text)"
+    echo -e "           'p' = Compress \e[0mp\e[93micture(s)"
+    echo -e "           'd' = Compress PDF \e[0md\e[93mocument"
+    echo -e "           't' = Create a \e[0mt\e[93mimelapse"
     read -p $'Selected option: \e[0m' selection
 
     case $selection in
@@ -111,7 +116,7 @@ main () {
             ;;
         
         # Read metadata of a file
-        '2')
+        'a')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
@@ -139,7 +144,7 @@ main () {
             ;;
         
         # Read important metadata of an image
-        '3')
+        'i')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
@@ -161,11 +166,11 @@ main () {
             echo -e "\n\e[93mBasic metadata:\e[0m"
             echo -e "$readInfo\n"
             echo    "$readModel with $readLensModel"
-            echo -e "ISO $readISO, ${readExposureTime}s, F$readFNumber\n"
+            echo -e "ISO $readISO, ${readExposureTime}s, f$readFNumber\n"
             ;;
 
         # Resizing pictures (with/without watermarking)
-        '4')
+        'r')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
@@ -174,7 +179,7 @@ main () {
             ;;
 
         # Compressing pictures
-        '5')
+        'p')
             echo -e "\n\e[93mDo you want to compress all of the pictures in the directory?"
             echo "  Options: 'y' = Yes"
             echo "           'n' = No (default)"
@@ -226,7 +231,7 @@ main () {
             ;;
 
         # Compress PDF document
-        '6')
+        'd')
             # Check if an input filepath was given and if not ask for one ("$@" = pass arguments from script call)
             checkInput "$@"
 
@@ -239,7 +244,7 @@ main () {
             ;;
 
         # Timelapse creation
-        '7')
+        't')
             # Call logic
             makeTimelapse
             ;;
@@ -265,7 +270,7 @@ checkMetadata () {
     # TODO MakerNotes can only be transferred as a whole block (between images) and make/model also has to be copied over! (kept here just in case)
     # exiftool -tagsFromFile input.jpg -makernotes -make -model output.jpg
 
-    echo -e "\n\e[93mDo you want to add extra metadata-info? (location, time between each shot,...)"
+    echo -e "\n\e[93mDo you want to add extra metadata-info? (interval, ...)"
     read -r -p $'  Press enter if not, otherwise enter text: \e[0m' extraMetadata
 
     # Check if an argument was given (-n = string is not null)
@@ -322,9 +327,9 @@ checkMetadata () {
 
     if [ "$extraMetadataGiven" = true ] # Boolean check
     then
-        newUserComment="$extraMetadata${NL}Start date/time of timelapse    : $readCreateDate${NL}$readMakeModel${NL}LensMake                        : $readLensMake${NL}LensModel                       : $readLensModel${NL}FocalLength                     : $readFocalLength${NL}FNumber                         : $readFNumber${NL}$readISOExposureTime${NL}$readMakerNotes${NL}"
+        newUserComment="Extra Info                      : $extraMetadata${NL}Start Date/Time Timelapse       : $readCreateDate${NL}$readMakeModel${NL}LensMake                        : $readLensMake${NL}LensModel                       : $readLensModel${NL}FocalLength                     : $readFocalLength${NL}FNumber                         : $readFNumber${NL}$readISOExposureTime${NL}$readMakerNotes${NL}"
     else
-        newUserComment="Start date/time of timelapse    : $readCreateDate${NL}$readMakeModel${NL}LensMake                        : $readLensMake${NL}LensModel                       : $readLensModel${NL}FocalLength                     : $readFocalLength${NL}FNumber                         : $readFNumber${NL}$readISOExposureTime${NL}$readMakerNotes${NL}"
+        newUserComment="Start Date/Time Timelapse       : $readCreateDate${NL}$readMakeModel${NL}LensMake                        : $readLensMake${NL}LensModel                       : $readLensModel${NL}FocalLength                     : $readFocalLength${NL}FNumber                         : $readFNumber${NL}$readISOExposureTime${NL}$readMakerNotes${NL}"
     fi
 
     echo -e "\n\e[93mAdding the following metadata to the videofile:\e[0m"
